@@ -4,17 +4,20 @@ using System.Collections;
 public class GameScript : MonoBehaviour {
 
 	// Use this for initialization
-	void Start () {
-	
+	void Start () 
+	{
+		GvrReticle reticle = GetComponentInChildren<GvrReticle>();
+
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
+		RaycastHit hit;
+		Physics.Raycast(transform.position, transform.forward, out hit);
+		print(hit.collider.GetType().ToString());
 		if(Input.GetMouseButtonDown(0))
 		{
-			RaycastHit hit;
-			Physics.Raycast(transform.position, transform.forward, out hit);
 			print(hit.collider.transform.ToString());
 			MeshRenderer mesh;
 			mesh = hit.collider.GetComponent<MeshRenderer>();
