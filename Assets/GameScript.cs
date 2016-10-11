@@ -37,8 +37,14 @@ public class GameScript : MonoBehaviour {
                         holdingItem = true;
                         itemHeld = hit.transform.gameObject;
                         itemHeld.layer = 0;
-                        print("move");
                     }
+					else if (hit.transform.tag == "Dupe")
+					{
+						holdingItem = true;
+						itemHeld = Instantiate(hit.collider.gameObject);
+						itemHeld.tag = "Moveable";
+						itemHeld.layer = 0;
+					}
                 }
                 else
                 {
