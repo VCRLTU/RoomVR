@@ -3,6 +3,10 @@ using System.Collections;
 
 public class GameScript : MonoBehaviour {
 
+    private static float WALL_LEN = 2f;
+    private static int LAYER_WALL = 8;
+    private static int LAYER_MOVE = 9;
+
     GameObject itemHeld;
 	Collider itemColider;
     bool holdingItem = false;
@@ -19,11 +23,12 @@ public class GameScript : MonoBehaviour {
 	void Update () 
 	{
 		RaycastHit hit;
-		Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1<<8));
-        if (hit.transform)
+        if (Input.GetMouseButtonDown(0))
         {
-            if (Input.GetMouseButtonDown(0))
+            Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
+            if (hit.transform)
             {
+
                 print(hit.transform.ToString());
                 if (!holdingItem)
                 {
@@ -37,78 +42,91 @@ public class GameScript : MonoBehaviour {
                     {
                         holdingItem = true;
                         itemHeld = hit.transform.gameObject;
-						itemColider = itemHeld.GetComponent<Collider>();
+                        itemColider = itemHeld.GetComponent<Collider>();
                         itemHeld.layer = 0;
                     }
-					else if (hit.transform.tag == "Dupe")
-					{
-						holdingItem = true;
-						itemHeld = Instantiate(hit.collider.gameObject);
-						itemColider = itemHeld.GetComponent<Collider>();
-						itemHeld.tag = "Moveable";
-						itemHeld.layer = 0;
-					}
+                    else if (hit.transform.tag == "Dupe")
+                    {
+                        holdingItem = true;
+                        itemHeld = Instantiate(hit.collider.gameObject);
+                        itemColider = itemHeld.GetComponent<Collider>();
+                        itemHeld.tag = "Moveable";
+                        itemHeld.layer = 0;
+                    }
                 }
                 else
                 {
-                    itemHeld.layer = 8;
+                    itemHeld.layer = LAYER_MOVE;
                     holdingItem = false;
                     itemHeld = null;
                 }
             }
-            else if (holdingItem)
-            {
-                itemHeld.transform.rotation = hit.transform.rotation;
-                print(hit.collider.bounds.extents.x);
+        }
+        else if (holdingItem)
+        {
+            Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL));
+            itemHeld.transform.rotation = hit.transform.rotation;
 
-                if (hit.point.x < 2.02f - itemColider.bounds.extents.x)     //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
-				{
-                    if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
+            if (hit.point.x < 2.02f - itemColider.bounds.extents.x)     //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
+            {
+                if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
+                {
+                    if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
                     {
-                        if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
+                        if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
                         {
-                            if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
-                            {
-                                itemHeld.transform.rotation = hit.transform.rotation;
-                                itemHeld.transform.position = hit.point;
-                            }
-                            else
-                            {
-                                Vector3 point = hit.point;
-                                point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
-                                itemHeld.transform.position = point;
-                            }
+                            itemHeld.transform.rotation = hit.transform.rotation;
+                            itemHeld.transform.position = hit.point;
                         }
                         else
                         {
                             Vector3 point = hit.point;
-                            point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
+                            point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
                             itemHeld.transform.position = point;
                         }
                     }
                     else
                     {
                         Vector3 point = hit.point;
-                        point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
+                        point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
                         itemHeld.transform.position = point;
                     }
                 }
-                else 
+                else
                 {
                     Vector3 point = hit.point;
-                    point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
+                    point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
                     itemHeld.transform.position = point;
                 }
-                if(hit.point.y < 2f - itemColider.bounds.extents.y)
+            }
+            else
+            {
+                Vector3 point = hit.point;
+                point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
+                itemHeld.transform.position = point;
+            }
+            if (hit.point.y < 2f - itemColider.bounds.extents.y)
+            {
+                if (hit.point.y > 0f + itemColider.bounds.extents.y)
                 {
-                    if(hit.point.y > 0f + itemColider.bounds.extents.y)
-                    {
+                    //Do nothing
 
-                    }
+                }
+                else
+                {
+                    print(hit.collider.bounds.extents.y);
+                    Vector3 point = itemHeld.transform.position;
+                    point.y = -hit.collider.bounds.extents.y + itemColider.bounds.extents.y + 1;
+                    itemHeld.transform.position = point;
                 }
             }
+            else
+            {
+                Vector3 point = itemHeld.transform.position;
+                point.y = hit.collider.bounds.extents.y - itemColider.bounds.extents.y + 1;
+                itemHeld.transform.position = point;
+            }
         }
-        transform.Rotate(new Vector3(Input.GetAxis("Vertical") * Time.deltaTime * 20, Input.GetAxis("Horizontal") * Time.deltaTime*20 , 0));
 	}
 
     public void setRed()
