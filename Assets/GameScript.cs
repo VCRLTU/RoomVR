@@ -4,6 +4,7 @@ using System.Collections;
 public class GameScript : MonoBehaviour {
 
     GameObject itemHeld;
+	Collider itemColider;
     bool holdingItem = false;
     bool colorSet = false;
     Color setter;
@@ -36,12 +37,14 @@ public class GameScript : MonoBehaviour {
                     {
                         holdingItem = true;
                         itemHeld = hit.transform.gameObject;
+						itemColider = itemHeld.GetComponent<Collider>();
                         itemHeld.layer = 0;
                     }
 					else if (hit.transform.tag == "Dupe")
 					{
 						holdingItem = true;
 						itemHeld = Instantiate(hit.collider.gameObject);
+						itemColider = itemHeld.GetComponent<Collider>();
 						itemHeld.tag = "Moveable";
 						itemHeld.layer = 0;
 					}
@@ -55,9 +58,14 @@ public class GameScript : MonoBehaviour {
             }
             else if (holdingItem)
             {
-                itemHeld.transform.rotation = hit.transform.rotation;
-                itemHeld.transform.position = hit.point;
-            }
+				print ( 2.02f - itemColider.bounds.extents.x);
+				print ( hit.point.x);
+				if(hit.point.x < 2.02f - itemColider.bounds.extents.x)
+				{
+	                itemHeld.transform.rotation = hit.transform.rotation;
+	                itemHeld.transform.position = hit.point;
+				}
+			}
         }
         transform.Rotate(new Vector3(Input.GetAxis("Vertical") * Time.deltaTime * 20, Input.GetAxis("Horizontal") * Time.deltaTime*20 , 0));
 	}
