@@ -58,14 +58,55 @@ public class GameScript : MonoBehaviour {
             }
             else if (holdingItem)
             {
-				print ( 2.02f - itemColider.bounds.extents.x);
-				print ( hit.point.x);
-				if(hit.point.x < 2.02f - itemColider.bounds.extents.x)
+                itemHeld.transform.rotation = hit.transform.rotation;
+                print(hit.collider.bounds.extents.x);
+
+                if (hit.point.x < 2.02f - itemColider.bounds.extents.x)     //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
 				{
-	                itemHeld.transform.rotation = hit.transform.rotation;
-	                itemHeld.transform.position = hit.point;
-				}
-			}
+                    if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
+                    {
+                        if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
+                        {
+                            if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
+                            {
+                                itemHeld.transform.rotation = hit.transform.rotation;
+                                itemHeld.transform.position = hit.point;
+                            }
+                            else
+                            {
+                                Vector3 point = hit.point;
+                                point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
+                                itemHeld.transform.position = point;
+                            }
+                        }
+                        else
+                        {
+                            Vector3 point = hit.point;
+                            point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
+                            itemHeld.transform.position = point;
+                        }
+                    }
+                    else
+                    {
+                        Vector3 point = hit.point;
+                        point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
+                        itemHeld.transform.position = point;
+                    }
+                }
+                else 
+                {
+                    Vector3 point = hit.point;
+                    point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
+                    itemHeld.transform.position = point;
+                }
+                if(hit.point.y < 2f - itemColider.bounds.extents.y)
+                {
+                    if(hit.point.y > 0f + itemColider.bounds.extents.y)
+                    {
+
+                    }
+                }
+            }
         }
         transform.Rotate(new Vector3(Input.GetAxis("Vertical") * Time.deltaTime * 20, Input.GetAxis("Horizontal") * Time.deltaTime*20 , 0));
 	}

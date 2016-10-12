@@ -16,43 +16,37 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Text))]
-public class FPS : MonoBehaviour {
+public class GvrFPS : MonoBehaviour {
+  private const string DISPLAY_TEXT_FORMAT = "{0} msf\n({1} FPS)";
+  private const string MSF_FORMAT = "#.#";
+  private const float MS_PER_SEC = 1000f;
+
   private Text textField;
   private float fps = 60;
+
+  public Camera cam;
 
   void Awake() {
     textField = GetComponent<Text>();
   }
 
-  void LateUpdate() {
-    string text = Application.version + " / Direct ";
-    text += GvrViewer.Controller.directRender ? "ON" : "off";
-
-    text += " / Distortion correction ";
-    switch(GvrViewer.Instance.DistortionCorrection) {
-    case GvrViewer.DistortionCorrectionMethod.Unity:
-      text += "Unity";
-      break;
-
-    case GvrViewer.DistortionCorrectionMethod.Native:
-      text += "Native";
-      break;
-
-    case GvrViewer.DistortionCorrectionMethod.None:
-      text += "none";
-      break;
-
-    default:
-      text += "UNKNOWN";
-      break;
+  void Start() {
+    if (cam == null) {
+       cam = Camera.main;
     }
 
-    text += " / ";
+    if (cam != null) {
+      // Tie this to the camera, and do not keep the local orientation.
+      transform.SetParent(cam.GetComponent<Transform>(), true);
+    }
+  }
 
+  void LateUpdate() {
     float interp = Time.deltaTime / (0.5f + Time.deltaTime);
     float currentFPS = 1.0f / Time.deltaTime;
     fps = Mathf.Lerp(fps, currentFPS, interp);
-    text += Mathf.RoundToInt(fps) + "fps";
-    textField.text = text;
+    float msf = MS_PER_SEC / fps;
+    textField.text = string.Format(DISPLAY_TEXT_FORMAT,
+        msf.ToString(MSF_FORMAT), Mathf.RoundToInt(fps));
   }
 }
