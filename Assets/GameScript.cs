@@ -6,11 +6,13 @@ public class GameScript : MonoBehaviour {
     private static float WALL_LEN = 2f;
     private static int LAYER_WALL = 8;
     private static int LAYER_MOVE = 9;
+	private static float Y_ITEMOFFSET = 0.001f;
 
     GameObject itemHeld;
 	Collider itemColider;
     bool holdingItem = false;
     bool colorSet = false;
+	bool itemIntersect = false;
     Color setter;
 
 	// Use this for initialization
@@ -29,7 +31,6 @@ public class GameScript : MonoBehaviour {
             if (hit.transform)
             {
 
-                print(hit.transform.ToString());
                 if (!holdingItem)
                 {
                     if (colorSet && hit.transform.tag == "Paintable")
@@ -44,6 +45,7 @@ public class GameScript : MonoBehaviour {
                         itemHeld = hit.transform.gameObject;
                         itemColider = itemHeld.GetComponent<Collider>();
                         itemHeld.layer = 0;
+						itemHeld.GetComponent<ItemScript>().setHolder(this);
                     }
                     else if (hit.transform.tag == "Dupe")
                     {
@@ -51,82 +53,99 @@ public class GameScript : MonoBehaviour {
                         itemHeld = Instantiate(hit.collider.gameObject);
                         itemColider = itemHeld.GetComponent<Collider>();
                         itemHeld.tag = "Moveable";
-                        itemHeld.layer = 0;
-                    }
+						itemHeld.layer = 0;
+						itemHeld.GetComponent<ItemScript>().setHolder(this);
+					}
                 }
                 else
                 {
-                    itemHeld.layer = LAYER_MOVE;
-                    holdingItem = false;
-                    itemHeld = null;
-                }
+					if(itemIntersect == false)
+					{
+						itemHeld.transform.position = hit.point;
+	                    itemHeld.layer = LAYER_MOVE;
+						itemHeld.GetComponent<ItemScript>().removeHolder();
+	                    holdingItem = false;
+	                    itemHeld = null;
+					}
+				}
             }
         }
         else if (holdingItem)
         {
             Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL));
-            itemHeld.transform.rotation = hit.transform.rotation;
+			if(hit.transform)
+			{
+				Vector3 point = hit.point;
+				//Bad solution
+				float y = hit.transform.rotation.eulerAngles.y;
+				print(y);
+				if( y > -1 && y <1)
+					point.z = point.z - 0.01f;
+				if( y > 89 && y < 91)
+					point.x = point.x - 0.01f; 
+				if( y > 179 && y < 181)
+					point.z = point.z + 0.01f;
+				if( y > 269 && y < 271)
+					point.x = point.x + 0.01f; 
 
-            if (hit.point.x < 2.02f - itemColider.bounds.extents.x)     //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
-            {
-                if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
-                {
-                    if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
-                    {
-                        if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
-                        {
-                            itemHeld.transform.rotation = hit.transform.rotation;
-                            itemHeld.transform.position = hit.point;
-                        }
-                        else
-                        {
-                            Vector3 point = hit.point;
-                            point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
-                            itemHeld.transform.position = point;
-                        }
-                    }
-                    else
-                    {
-                        Vector3 point = hit.point;
-                        point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
-                        itemHeld.transform.position = point;
-                    }
-                }
-                else
-                {
-                    Vector3 point = hit.point;
-                    point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
-                    itemHeld.transform.position = point;
-                }
-            }
-            else
-            {
-                Vector3 point = hit.point;
-                point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
-                itemHeld.transform.position = point;
-            }
-            if (hit.point.y < 2f - itemColider.bounds.extents.y)
-            {
-                if (hit.point.y > 0f + itemColider.bounds.extents.y)
-                {
-                    //Do nothing
+				//end of bad solution
+				itemHeld.transform.rotation = hit.transform.rotation;
+				//Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
+	            if (hit.point.x < 2.02f - itemColider.bounds.extents.x)    
+	            {
+	                if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
+	                {
+	                    if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
+	                    {
+	                        if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
+	                        {
+	                            itemHeld.transform.position = point;
+	                        }
+	                        else
+	                        {
+	                            point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
+	                            itemHeld.transform.position = point;
+	                        }
+	                    }
+	                    else
+	                    {
+	                        point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
+	                        itemHeld.transform.position = point;
+	                    }
+	                }
+	                else
+	                {
+	                    point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
+	                    itemHeld.transform.position = point;
+	                }
+	            }
+	            else
+	            {
+	                point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
+	                itemHeld.transform.position = point;
+	            }
 
-                }
-                else
-                {
-                    print(hit.collider.bounds.extents.y);
-                    Vector3 point = itemHeld.transform.position;
-                    point.y = -hit.collider.bounds.extents.y + itemColider.bounds.extents.y + 1;
-                    itemHeld.transform.position = point;
-                }
-            }
-            else
-            {
-                Vector3 point = itemHeld.transform.position;
-                point.y = hit.collider.bounds.extents.y - itemColider.bounds.extents.y + 1;
-                itemHeld.transform.position = point;
-            }
-        }
+				//Same as above but only for y axis
+	            if (hit.point.y < 2f - itemColider.bounds.extents.y)		
+	            {
+	                if (hit.point.y > 0f + itemColider.bounds.extents.y)
+	                {
+	                    //Do nothing
+
+	                }
+	                else
+	                {
+	                    point.y = -hit.collider.bounds.extents.y + itemColider.bounds.extents.y + 1 + Y_ITEMOFFSET;
+	                    itemHeld.transform.position = point;
+	                }
+	            }
+	            else
+	            {
+					point.y = hit.collider.bounds.extents.y - itemColider.bounds.extents.y + 1 - Y_ITEMOFFSET;
+	                itemHeld.transform.position = point;
+	            }
+	        }
+		}
 	}
 
     public void setRed()
@@ -151,5 +170,12 @@ public class GameScript : MonoBehaviour {
         setter = new Color(1, 1, 1);
         colorSet = true;
     }
-
+	public void IntersectTrue ()
+	{
+		itemIntersect = true;
+	}
+	public void IntersectFalse ()
+	{
+		itemIntersect = false;
+	}
 }
