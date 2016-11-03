@@ -1,7 +1,13 @@
 fileFormatVersion: 2
+<<<<<<< HEAD:Assets/ClassRoom Stuff.meta
 guid: 9abdf407caa4b6f49b8a860b64a096be
 folderAsset: yes
 timeCreated: 1476426662
+=======
+guid: c03124137bbd6784796dd96f839b98fc
+folderAsset: yes
+timeCreated: 1476380445
+>>>>>>> 1c10d0a9425d3e887127bd01c48e02e8d4e469b4:Assets/Plugins.meta
 licenseType: Free
 DefaultImporter:
   userData: 
