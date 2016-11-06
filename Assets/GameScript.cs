@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 
 public class GameScript : MonoBehaviour
 {
@@ -29,10 +30,8 @@ public class GameScript : MonoBehaviour
     public GameObject Wall4;
     private MeshRenderer W4mesh;
 
-    private int[] winCon1 = { 0 };
-    private int[] winCon2 = { 1 };
-    private int[] winCon3 = { 1 };
-    private int[] winCon4 = { 0 };
+	bool[] winFlags = {false};
+	int[][] winCond = {{0,1,1,0}};
 
     // Use this for initialization
     void Start()
@@ -94,7 +93,7 @@ public class GameScript : MonoBehaviour
 
                     //end of bad solution
                     itemHeld.transform.rotation = hit.transform.rotation;
-                    //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
+                    //Weird and long way to make sure the item held doesn't go half outside the walls (snaps to the edges)
                     if (hit.point.x < 2.02f - itemColider.bounds.extents.x)
                     {
                         if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
@@ -151,7 +150,7 @@ public class GameScript : MonoBehaviour
                 }
             }
         }
-        else
+        else //not holding item
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -221,92 +220,51 @@ public class GameScript : MonoBehaviour
         itemIntersect = false;
     }
 
-    private void CheckWin()
+	private int getColorNum(MeshRenderer mesh)
+	{
+		Color col = W1mesh.material.color;
+		if (col.b == 1 && col.g != 1)
+			return BLUE;
+		if (col.r == 1 && col.g != 1)
+			return RED;
+		if (col.g == 1 && col.r != 1)
+			return GREEN;
+		if (col.r == 1 && col.g == 1 && col.b == 1)
+			return WHITE;
+	}
+
+	public void CheckWin()
     {
-        int met = 0;
-        Color col = W1mesh.material.color;
-        switch (winCon1[0])
-        {
-            case BLUE:
-                if (col.b == 1 && col.g != 1)
-                    met++;
-                break;
-            case RED:
-                if (col.r == 1 && col.g != 1)
-                    met++;
-                break;
-            case GREEN:
-                if (col.g == 1 && col.r != 1)
-                    met++;
-                break;
-            case WHITE:
-                if (col.r == 1 && col.g == 1 && col.b == 1)
-                    met++;
-                break;
-        }
+		int[] currentCol = {getColorNum(W1mesh), getColorNum(W2mesh), getColorNum(W3mesh), getColorNum(W4mesh)};
+		if(winFlags[0])
+		{
+			int blue = winCond[0][BLUE];
+			int red = winCond[0][RED];
+			int green = winCond[0][GREEN];
+			int white = winCond[0][WHITE];
 
-        col = W2mesh.material.color;
-        switch (winCon2[0])
-        {
-            case BLUE:
-                if (col.b == 1 && col.g != 1)
-                    met++;
-                break;
-            case RED:
-                if (col.r == 1 && col.g != 1)
-                    met++;
-                break;
-            case GREEN:
-                if (col.g == 1 && col.r != 1)
-                    met++;
-                break;
-            case WHITE:
-                if (col.r == 1 && col.g == 1 && col.b == 1)
-                    met++;
-                break;
-        }
-
-        col = W3mesh.material.color;
-        switch (winCon3[0])
-        {
-            case BLUE:
-                if (col.b == 1 && col.g != 1)
-                    met++;
-                break;
-            case RED:
-                if (col.r == 1 && col.g != 1)
-                    met++;
-                break;
-            case GREEN:
-                if (col.g == 1 && col.r != 1)
-                    met++;
-                break;
-            case WHITE:
-                if (col.r == 1 && col.g == 1 && col.b == 1)
-                    met++;
-                break;
-        }
-
-        col = W4mesh.material.color;
-        switch (winCon4[0])
-        {
-            case BLUE:
-                if (col.b == 1 && col.g != 1)
-                    met++;
-                break;
-            case RED:
-                if (col.r == 1 && col.g != 1)
-                    met++;
-                break;
-            case GREEN:
-                if (col.g == 1 && col.r != 1)
-                    met++;
-                break;
-            case WHITE:
-                if (col.r == 1 && col.g == 1 && col.b == 1)
-                    met++;
-                break;
-        }
-        print(met.ToString());
+			for (int i = 0; i < currentCol.Length; i++) 
+			{
+				if(currentCol[i] == BLUE)
+					blue --;
+				else if (currentCol[i] == RED)
+					red --;
+				else if (currentCol[i] == GREEN)
+					green --;
+				else if (currentCol[i] == WHITE)
+					white --;
+				if (blue + red + green  + white == 0)
+				{
+					print("Win");
+				}
+			}
+		}
+		else
+		{
+			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
+			{
+				print("win");
+			}
+		}
     }
 }
