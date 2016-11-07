@@ -13,6 +13,10 @@ public class GameScript : MonoBehaviour
     private const int RED = 1;
     private const int GREEN = 2;
     private const int WHITE = 3;
+	private const int COLORS = 0;
+	private const int DOOR = 1;
+	private const int WINDOW = 2;
+	
 
     private GameObject itemHeld;
     private Collider itemColider;
@@ -29,10 +33,9 @@ public class GameScript : MonoBehaviour
     public GameObject Wall4;
     private MeshRenderer W4mesh;
 
-	bool[] winFlags = {false};
-	int[][] winCond = {{0,1,1,0}};
+	bool[] winFlags = {false, true};
+	int[][] winCond = {{0,1,1,0}, {3}};
 
-<<<<<<< HEAD
     public TextMesh text;
     int instruction = 0;
     int wallColor = 0;
@@ -164,7 +167,6 @@ public class GameScript : MonoBehaviour
                 wallColor = Random.Range(1, 3);
                 if (instruction > 0 && wallColor == 1)
                     
-
                     text.text = "Måla " + instruction + "väggar " + wallColor;
 
                 Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
