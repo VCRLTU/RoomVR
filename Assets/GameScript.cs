@@ -1,20 +1,38 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 
-public class GameScript : MonoBehaviour {
+public class GameScript : MonoBehaviour
+{
 
-    private static float WALL_LEN = 2f;
-    private static int LAYER_WALL = 8;
-    private static int LAYER_MOVE = 9;
-	private static float Y_ITEMOFFSET = 0.001f;
+    private const float WALL_LEN = 2f;
+    private const int LAYER_WALL = 8;
+    private const int LAYER_MOVE = 9;
+    private const float Y_ITEMOFFSET = 0.001f;
+    private const int BLUE = 0;
+    private const int RED = 1;
+    private const int GREEN = 2;
+    private const int WHITE = 3;
 
-    GameObject itemHeld;
-	Collider itemColider;
-    bool holdingItem = false;
-    bool colorSet = false;
-	bool itemIntersect = false;
-    Color setter;
+    private GameObject itemHeld;
+    private Collider itemColider;
+    private bool holdingItem = false;
+    private bool colorSet = false;
+    private bool itemIntersect = false;
+    private Color setter;
+    public GameObject Wall1;
+    private MeshRenderer W1mesh;
+    public GameObject Wall2;
+    private MeshRenderer W2mesh;
+    public GameObject Wall3;
+    private MeshRenderer W3mesh;
+    public GameObject Wall4;
+    private MeshRenderer W4mesh;
 
+	bool[] winFlags = {false};
+	int[][] winCond = {{0,1,1,0}};
+
+<<<<<<< HEAD
     public TextMesh text;
     int instruction = 0;
     int wallColor = 0;
@@ -23,7 +41,11 @@ public class GameScript : MonoBehaviour {
 	void Start () 
 	{
 		GvrReticle reticle = GetComponentInChildren<GvrReticle>();
-
+		
+        W1mesh = Wall1.GetComponent<MeshRenderer>();
+        W2mesh = Wall2.GetComponent<MeshRenderer>();
+        W3mesh = Wall3.GetComponent<MeshRenderer>();
+        W4mesh = Wall4.GetComponent<MeshRenderer>();
         
 	}
 	
@@ -58,9 +80,10 @@ public class GameScript : MonoBehaviour {
                         holdingItem = false;
                         itemHeld = null;
                     }
+                    CheckWin();
                 }
                 else
-                { 
+                {
                     Vector3 point = hit.point;
                     //Bad solution
                     float y = hit.transform.rotation.eulerAngles.y;
@@ -76,7 +99,7 @@ public class GameScript : MonoBehaviour {
 
                     //end of bad solution
                     itemHeld.transform.rotation = hit.transform.rotation;
-                    //Weird and long way to make sure the item held doesn't go half outside the walls (snap to the edges)
+                    //Weird and long way to make sure the item held doesn't go half outside the walls (snaps to the edges)
                     if (hit.point.x < 2.02f - itemColider.bounds.extents.x)
                     {
                         if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
@@ -133,7 +156,7 @@ public class GameScript : MonoBehaviour {
                 }
             }
         }
-        else
+        else //not holding item
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -154,6 +177,7 @@ public class GameScript : MonoBehaviour {
                             MeshRenderer mesh;
                             mesh = hit.collider.GetComponent<MeshRenderer>();
                             mesh.material.color = setter;
+                            CheckWin();
                         }
                         else if (hit.transform.tag == "Moveable")
                         {
@@ -176,8 +200,7 @@ public class GameScript : MonoBehaviour {
                 }
             }
         }
-
-	}
+    }
 
     public void setRed()
     {
@@ -202,12 +225,60 @@ public class GameScript : MonoBehaviour {
         setter = new Color(1, 1, 1);
         colorSet = true;
     }
-	public void IntersectTrue ()
+    public void IntersectTrue()
+    {
+        itemIntersect = true;
+    }
+    public void IntersectFalse()
+    {
+        itemIntersect = false;
+    }
+
+	private int getColorNum(MeshRenderer mesh)
 	{
-		itemIntersect = true;
+		Color col = W1mesh.material.color;
+		if (col.b == 1 && col.g != 1)
+			return BLUE;
+		if (col.r == 1 && col.g != 1)
+			return RED;
+		if (col.g == 1 && col.r != 1)
+			return GREEN;
+		if (col.r == 1 && col.g == 1 && col.b == 1)
+			return WHITE;
 	}
-	public void IntersectFalse ()
-	{
-		itemIntersect = false;
-	}
+
+	public void CheckWin()
+    {
+		int[] currentCol = {getColorNum(W1mesh), getColorNum(W2mesh), getColorNum(W3mesh), getColorNum(W4mesh)};
+		if(winFlags[0])
+		{
+			int blue = winCond[0][BLUE];
+			int red = winCond[0][RED];
+			int green = winCond[0][GREEN];
+			int white = winCond[0][WHITE];
+
+			for (int i = 0; i < currentCol.Length; i++) 
+			{
+				if(currentCol[i] == BLUE)
+					blue --;
+				else if (currentCol[i] == RED)
+					red --;
+				else if (currentCol[i] == GREEN)
+					green --;
+				else if (currentCol[i] == WHITE)
+					white --;
+				if (blue + red + green  + white == 0)
+				{
+					print("Win");
+				}
+			}
+		}
+		else
+		{
+			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
+			{
+				print("win");
+			}
+		}
+    }
 }
