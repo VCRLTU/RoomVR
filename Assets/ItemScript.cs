@@ -3,7 +3,7 @@ using System.Collections;
 
 public class ItemScript : MonoBehaviour {
 
-	GameScript holder;
+	GameScript holder = null;
 
 	// Use this for initialization
 	void Start () 
@@ -31,11 +31,13 @@ public class ItemScript : MonoBehaviour {
 
 	void OnTriggerEnter() 
 	{
-		holder.IntersectTrue();
+		if(holder)
+			holder.IntersectTrue();
 	}
 
 	void OnTriggerExit() 
 	{
-		holder.IntersectFalse();	
+		if(holder)
+			holder.IntersectFalse();	
 	}
 }
