@@ -207,9 +207,8 @@ public class GameScript : MonoBehaviour
 
     public void setRed()
     {
-        setter = new Color(0.5f, 0, 0);
+        setter = new Color(1, 0, 0);
         colorSet = true;
-       
     }
 
     public void setBlue()
@@ -247,12 +246,14 @@ public class GameScript : MonoBehaviour
 			Color col = meshes[i].material.color;
 			if (col.b == 1 && col.g != 1)
 				currentCol[i] = BLUE;
-			if (col.r == 1 && col.g != 1)
+			else if (col.r == 1 && col.g != 1)
 				currentCol[i] = RED;
-			if (col.g == 1 && col.r != 1)
+			else if (col.g == 1 && col.r != 1)
 				currentCol[i] = GREEN;
-			if (col.r == 1 && col.g == 1 && col.b == 1)
+			else if (col.r == 1 && col.g == 1 && col.b == 1)
 				currentCol[i] = WHITE;
+			else 
+				throw new UnityException();
 		}
 		if(totalAmountFlags[0])
 		{
@@ -279,58 +280,90 @@ public class GameScript : MonoBehaviour
 		}
 		else
 		{
+			for( int i = 0; i < currentCol.Length; i++)
+			{
+				print(currentCol[i] + " : " + winCond[0][i]);
+			}
 			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
 			{
 				correctCol = true;
 			}
 		}
 
-		foreach(Transform trans in walls[0].transform)
+		//if(correctCol) 	// If colours aren't correct, we don't need to check anything else. But commented for now for debugging
+		//{
+			bool correctItems = true; //negate if fault found
 
-		{
-			Debug.Log(trans.name == items[0].name + "(Clone)");
-		}
-
-		bool correctItems = true; //negate if fault found
-
-		for (int i = 1; i < winCond.Length && correctItems; i++)
-		{
-			if(totalAmountFlags[i]) //If we're only looking at totals
+			for (int i = 1; i < winCond.Length && correctItems; i++)
 			{
-				int amount = winCond[i][0];
-				foreach (GameObject wall in walls)
+				if(totalAmountFlags[i]) //If we're only looking at totals
 				{
-					foreach (Transform child in wall.transform)
+					int amount = winCond[i][0];
+					foreach (GameObject wall in walls)
 					{
-						if(child.name == items[i-1].name + "(Clone)")
-							amount --;
-					}
-				}
-				if(amount != 0)
-					correctItems = false;
-			}
-			else  //If looking at specific amount of items at each wall
-			{
-				for (int j = 0; j < winCond[i].Length && correctItems; j++)
-				{
-					int amount = winCond[i][j];
-					foreach (Transform child in walls[j].transform)
-					{
-						if(child.name == items[i-1].name + "(Clone)")
-							amount --;
+						foreach (Transform child in wall.transform)
+						{
+							if(child.name == items[i-1].name + "(Clone)")
+								amount --;
+						}
 					}
 					if(amount != 0)
 						correctItems = false;
 				}
+				else  //If looking at specific amount of items at each wall
+				{
+					for (int j = 0; j < winCond[i].Length && correctItems; j++)
+					{
+						int amount = winCond[i][j];
+						foreach (Transform child in walls[j].transform)
+						{
+							if(child.name == items[i-1].name + "(Clone)")
+								amount --;
+						}
+						if(amount != 0)
+							correctItems = false;
+					}
+				}
+			}
+			if (correctCol && correctItems)
+			{
+				print("Win");
+				Victory();
+			}
+			else
+			{
+				print("not win " + correctCol.ToString() + " and " + correctItems.ToString());
+			}
+		//}
+    }
+
+	private void Victory()
+	{
+		foreach (GameObject wall in walls)
+		{
+			foreach (Transform child in wall.transform)
+			{
+				Destroy(child.gameObject);
 			}
 		}
-		if (correctCol && correctItems)
+
+		Color white = new Color(1,1,1);
+
+		foreach (MeshRenderer mesh in meshes)
 		{
-			print("Win");
+			mesh.material.color = white;
 		}
-		else
-		{
-			print("not win " + correctCol.ToString() + " and " + correctItems.ToString());
-		}
-    }
+		text.text = "Du vinner!";
+		levelUp();
+		newInstructions();
+	}
+
+	private void levelUp()
+	{
+		//function for leveling up. Should probably be merged with Victory, but good for showing the concept right now
+	}
+	private void newInstructions()
+	{
+		//function for changing the instructions.
+	}
 }

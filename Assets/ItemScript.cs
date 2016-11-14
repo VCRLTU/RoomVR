@@ -5,19 +5,6 @@ public class ItemScript : MonoBehaviour {
 
 	GameScript holder = null;
 
-	// Use this for initialization
-	void Start () 
-	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update () 
-	{
-	
-	}
-
-
 
 	public void setHolder( GameScript gs)
 	{
