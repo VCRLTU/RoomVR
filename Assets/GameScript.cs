@@ -24,40 +24,39 @@ public class GameScript : MonoBehaviour
     private bool colorSet = false;
     private bool itemIntersect = false;
     private Color setter;
-    public GameObject Wall1;
-    private MeshRenderer W1mesh;
-    public GameObject Wall2;
-    private MeshRenderer W2mesh;
-    public GameObject Wall3;
-    private MeshRenderer W3mesh;
-    public GameObject Wall4;
-    private MeshRenderer W4mesh;
 
-	bool[] winFlags = {false};
-	int[][] winCond = new int[][] {
-        new int[] {0,0,0,0}
-        };   
 
-    public TextMesh text;
-    int instruction = 0;
-    int wallColor = 0;
+	public GameObject[] walls = {null, null, null, null};
+	private MeshRenderer[] meshes;
+	public GameObject[] items;
 
-	// Use this for initialization
-	void Start () 
+	bool[] totalAmountFlags = {false, false};
+	int[][] winCond = new int[][] 
 	{
-		GvrReticle reticle = GetComponentInChildren<GvrReticle>();
-		
-        W1mesh = Wall1.GetComponent<MeshRenderer>();
-        W2mesh = Wall2.GetComponent<MeshRenderer>();
-        W3mesh = Wall3.GetComponent<MeshRenderer>();
-        W4mesh = Wall4.GetComponent<MeshRenderer>();
-        
-	}
-	
-	// Update is called once per frame
-	void Update () 
-	{
-		RaycastHit hit;
+		new int[] {BLUE, RED , RED , BLUE},
+		new int[] {1, 0, 0, 0}
+	};
+
+
+	public TextMesh text;
+	int instruction = 0;
+	int wallColor = 0;
+
+
+    // Use this for initialization
+    void Start()
+    {
+		meshes = new MeshRenderer[walls.Length];
+		for(int i = 0; i < walls.Length; i++)
+		{
+			meshes[i] = walls[i].GetComponent<MeshRenderer>();
+		}
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        RaycastHit hit;
         if (holdingItem)
         {
             Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL));
@@ -69,7 +68,6 @@ public class GameScript : MonoBehaviour
                     {
                         float y = hit.transform.rotation.eulerAngles.y;
                         Vector3 point = itemHeld.transform.position;
-                        print(y);
                         if (y > -1 && y < 1)
                             point.z = point.z + 0.01f;
                         if (y > 89 && y < 91)
@@ -79,6 +77,7 @@ public class GameScript : MonoBehaviour
                         if (y > 269 && y < 271)
                             point.x = point.x - 0.01f;
 
+						itemHeld.transform.parent = hit.transform;
                         itemHeld.transform.position = point;
                         itemHeld.layer = LAYER_MOVE;
                         itemHeld.GetComponent<ItemScript>().removeHolder();
@@ -87,12 +86,11 @@ public class GameScript : MonoBehaviour
                     }
                     CheckWin();
                 }
-                else
+                else //If not clicking
                 {
                     Vector3 point = hit.point;
                     //Bad solution
                     float y = hit.transform.rotation.eulerAngles.y;
-                    print(y);
                     if (y > -1 && y < 1)
                         point.z = point.z - 0.01f;
                     if (y > 89 && y < 91)
@@ -145,7 +143,6 @@ public class GameScript : MonoBehaviour
                         if (hit.point.y > 0f + itemColider.bounds.extents.y)
                         {
                             //Do nothing
-
                         }
                         else
                         {
@@ -187,8 +184,9 @@ public class GameScript : MonoBehaviour
                             itemColider = itemHeld.GetComponent<Collider>();
                             itemHeld.layer = 0;
                             itemHeld.GetComponent<ItemScript>().setHolder(this);
+							itemHeld.transform.parent = null;
                         }
-                        else if (hit.transform.tag == "Dupe")
+                        else if (hit.transform.tag == "Dupe") //Placeholder
                         {
                             holdingItem = true;
                             itemHeld = Instantiate(hit.collider.gameObject);
@@ -196,6 +194,7 @@ public class GameScript : MonoBehaviour
                             itemHeld.tag = "Moveable";
                             itemHeld.layer = 0;
                             itemHeld.GetComponent<ItemScript>().setHolder(this);
+							itemHeld.transform.parent = null;
                         }
                     }
                 }
@@ -205,9 +204,8 @@ public class GameScript : MonoBehaviour
 
     public void setRed()
     {
-        setter = new Color(0.5f, 0, 0);
+        setter = new Color(1, 0, 0);
         colorSet = true;
-       
     }
 
     public void setBlue()
@@ -235,27 +233,26 @@ public class GameScript : MonoBehaviour
         itemIntersect = false;
     }
 
-	private int getColorNum(MeshRenderer mesh)
-	{
-		Color col = W1mesh.material.color;
-        if (col.b == 1 && col.g != 1)
-            return BLUE;
-        else if (col.r == 1 && col.g != 1)
-            return RED;
-        else if (col.g == 1 && col.r != 1)
-            return GREEN;
-        else if (col.r == 1 && col.g == 1 && col.b == 1)
-            return WHITE;
-        else
-            return 666;
-	}
-
 	public void CheckWin()
     {
+		bool correctCol = false;
+		int[] currentCol = new int[meshes.Length];
 
-        
-        int[] currentCol = {getColorNum(W1mesh), getColorNum(W2mesh), getColorNum(W3mesh), getColorNum(W4mesh)};
-		if(winFlags[0])
+		for (int i = 0; i < meshes.Length; i++)
+		{
+			Color col = meshes[i].material.color;
+			if (col.b == 1 && col.g != 1)
+				currentCol[i] = BLUE;
+			else if (col.r == 1 && col.g != 1)
+				currentCol[i] = RED;
+			else if (col.g == 1 && col.r != 1)
+				currentCol[i] = GREEN;
+			else if (col.r == 1 && col.g == 1 && col.b == 1)
+				currentCol[i] = WHITE;
+			else 
+				throw new UnityException();
+		}
+		if(totalAmountFlags[0])
 		{
 			int blue = winCond[0][BLUE];
 			int red = winCond[0][RED];
@@ -276,16 +273,96 @@ public class GameScript : MonoBehaviour
 					white --;
 				if (blue + red + green  + white == 0)
 				{
-					print("Win");
+					correctCol = true;
 				}
 			}
 		}
 		else
 		{
+			for( int i = 0; i < currentCol.Length; i++)
+			{
+				print(currentCol[i] + " : " + winCond[0][i]);
+			}
 			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
 			{
-				print("win");
+				correctCol = true;
 			}
 		}
+
+		//if(correctCol) 	// If colours aren't correct, we don't need to check anything else. But commented for now for debugging
+		//{
+			bool correctItems = true; //negate if fault found
+
+			for (int i = 1; i < winCond.Length && correctItems; i++)
+			{
+				if(totalAmountFlags[i]) //If we're only looking at totals
+				{
+					int amount = winCond[i][0];
+					foreach (GameObject wall in walls)
+					{
+						foreach (Transform child in wall.transform)
+						{
+							if(child.name == items[i-1].name + "(Clone)")
+								amount --;
+						}
+					}
+					if(amount != 0)
+						correctItems = false;
+				}
+				else  //If looking at specific amount of items at each wall
+				{
+					for (int j = 0; j < winCond[i].Length && correctItems; j++)
+					{
+						int amount = winCond[i][j];
+						foreach (Transform child in walls[j].transform)
+						{
+							if(child.name == items[i-1].name + "(Clone)")
+								amount --;
+						}
+						if(amount != 0)
+							correctItems = false;
+					}
+				}
+			}
+			if (correctCol && correctItems)
+			{
+				print("Win");
+				Victory();
+			}
+			else
+			{
+				print("not win " + correctCol.ToString() + " and " + correctItems.ToString());
+			}
+		//}
     }
+
+	private void Victory()
+	{
+		foreach (GameObject wall in walls)
+		{
+			foreach (Transform child in wall.transform)
+			{
+				Destroy(child.gameObject);
+			}
+		}
+
+		Color white = new Color(1,1,1);
+
+		foreach (MeshRenderer mesh in meshes)
+		{
+			mesh.material.color = white;
+		}
+		text.text = "Du vinner!";
+		levelUp();
+		newInstructions();
+	}
+
+	private void levelUp()
+	{
+		//function for leveling up. Should probably be merged with Victory, but good for showing the concept right now
+	}
+	private void newInstructions()
+	{
+		//function for changing the instructions.
+	}
 }

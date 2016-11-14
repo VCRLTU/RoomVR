@@ -3,20 +3,7 @@ using System.Collections;
 
 public class ItemScript : MonoBehaviour {
 
-	GameScript holder;
-
-	// Use this for initialization
-	void Start () 
-	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update () 
-	{
-	
-	}
-
+	GameScript holder = null;
 
 
 	public void setHolder( GameScript gs)
@@ -31,11 +18,13 @@ public class ItemScript : MonoBehaviour {
 
 	void OnTriggerEnter() 
 	{
-		holder.IntersectTrue();
+		if(holder)
+			holder.IntersectTrue();
 	}
 
 	void OnTriggerExit() 
 	{
-		holder.IntersectFalse();	
+		if(holder)
+			holder.IntersectFalse();	
 	}
 }
