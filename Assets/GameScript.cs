@@ -33,8 +33,10 @@ public class GameScript : MonoBehaviour
     public GameObject Wall4;
     private MeshRenderer W4mesh;
 
-	bool[] winFlags = {false, true};
-	int[][] winCond = {{0,1,1,0}, {3}};
+	bool[] winFlags = {false};
+	int[][] winCond = new int[][] {
+        new int[] {0,0,0,0}
+        };   
 
     public TextMesh text;
     int instruction = 0;
@@ -163,11 +165,8 @@ public class GameScript : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                instruction = Random.Range(0, 5);
-                wallColor = Random.Range(1, 3);
-                if (instruction > 0 && wallColor == 1)
-                    
-                    text.text = "Måla " + instruction + "väggar " + wallColor;
+                
+
 
                 Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
                 if (hit.transform)
@@ -239,19 +238,23 @@ public class GameScript : MonoBehaviour
 	private int getColorNum(MeshRenderer mesh)
 	{
 		Color col = W1mesh.material.color;
-		if (col.b == 1 && col.g != 1)
-			return BLUE;
-		if (col.r == 1 && col.g != 1)
-			return RED;
-		if (col.g == 1 && col.r != 1)
-			return GREEN;
-		if (col.r == 1 && col.g == 1 && col.b == 1)
-			return WHITE;
+        if (col.b == 1 && col.g != 1)
+            return BLUE;
+        else if (col.r == 1 && col.g != 1)
+            return RED;
+        else if (col.g == 1 && col.r != 1)
+            return GREEN;
+        else if (col.r == 1 && col.g == 1 && col.b == 1)
+            return WHITE;
+        else
+            return 666;
 	}
 
 	public void CheckWin()
     {
-		int[] currentCol = {getColorNum(W1mesh), getColorNum(W2mesh), getColorNum(W3mesh), getColorNum(W4mesh)};
+
+        
+        int[] currentCol = {getColorNum(W1mesh), getColorNum(W2mesh), getColorNum(W3mesh), getColorNum(W4mesh)};
 		if(winFlags[0])
 		{
 			int blue = winCond[0][BLUE];
@@ -259,7 +262,9 @@ public class GameScript : MonoBehaviour
 			int green = winCond[0][GREEN];
 			int white = winCond[0][WHITE];
 
-			for (int i = 0; i < currentCol.Length; i++) 
+            
+
+            for (int i = 0; i < currentCol.Length; i++) 
 			{
 				if(currentCol[i] == BLUE)
 					blue --;
