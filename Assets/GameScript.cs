@@ -279,10 +279,6 @@ public class GameScript : MonoBehaviour
 		}
 		else
 		{
-			for( int i = 0; i < currentCol.Length; i++)
-			{
-				print(currentCol[i] + " : " + winCond[0][i]);
-			}
 			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
 			{
 				correctCol = true;
