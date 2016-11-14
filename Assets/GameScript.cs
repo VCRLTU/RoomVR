@@ -30,9 +30,11 @@ public class GameScript : MonoBehaviour
     public GameObject Wall4;
     private MeshRenderer W4mesh;
 
-	bool[] winFlags = {false};
-	int[][] winCond = {{0,1,1,0}};
-
+    bool[] winFlags = { false };
+    int[][] winCond = new int[][]
+    {
+        new int[] {0,1,1,0}
+    };
     // Use this for initialization
     void Start()
     {
@@ -225,12 +227,14 @@ public class GameScript : MonoBehaviour
 		Color col = W1mesh.material.color;
 		if (col.b == 1 && col.g != 1)
 			return BLUE;
-		if (col.r == 1 && col.g != 1)
+		else if (col.r == 1 && col.g != 1)
 			return RED;
-		if (col.g == 1 && col.r != 1)
+		else if (col.g == 1 && col.r != 1)
 			return GREEN;
-		if (col.r == 1 && col.g == 1 && col.b == 1)
-			return WHITE;
+        else if (col.r == 1 && col.g == 1 && col.b == 1)
+            return WHITE;
+        else
+            return 666;
 	}
 
 	public void CheckWin()
