@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Linq;
 
@@ -34,15 +35,21 @@ public class GameScript : MonoBehaviour
 		new int[] {1, 0, 0, 0}
 	};
 
-
-	public TextMesh text;
+    public Text instr;
+    public Text AudioText;
+    public TextMesh text;
+    private bool Mute;
 	int instruction = 0;
 	int wallColor = 0;
 
     // Use this for initialization
     void Start()
     {
-		meshes = new MeshRenderer[walls.Length];
+        setNewInstructions("Test");
+        Mute = false;
+        ChangeSound(Mute);
+
+        meshes = new MeshRenderer[walls.Length];
 		for(int i = 0; i < walls.Length; i++)
 		{
 			meshes[i] = walls[i].GetComponent<MeshRenderer>();
@@ -360,6 +367,41 @@ public class GameScript : MonoBehaviour
 	}
 	private void newInstructions()
 	{
-		//function for changing the instructions.
-	}
+        //setNewInstructions();
+        //function for changing the instructions.
+    }
+    public void setNewInstructions(string winInstructrions)
+    {
+        instr.text = winInstructrions;
+    }
+
+    public void ChangeSound(bool Mute)
+    {
+        if (Mute == false)
+        {
+            // AudioListener.pause = false;
+            AudioText.text = "Audio On";
+            AudioListener.volume = 1;
+        }
+        else
+        {
+            // AudioListener.pause = true;
+            AudioText.text = "Audio Off";
+            AudioListener.volume = 0;
+        }
+    }
+
+    public void toggleSound()
+    {
+        if (Mute == true)
+        {
+            Mute = false;
+            ChangeSound(Mute);
+        }
+        else
+        {
+            Mute = true;
+            ChangeSound(Mute);
+        }
+    }
 }
