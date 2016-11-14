@@ -13,9 +13,6 @@ public class GameScript : MonoBehaviour
     private const int RED = 1;
     private const int GREEN = 2;
     private const int WHITE = 3;
-	private const int COLORS = 0;
-	private const int DOOR = 1;
-	private const int WINDOW = 2;
 	
 
     private GameObject itemHeld;
@@ -28,7 +25,7 @@ public class GameScript : MonoBehaviour
     private int level = 1;
 
 
-	public GameObject[] walls = {null, null, null, null};
+    public GameObject[] walls = new GameObject[4];
 	private MeshRenderer[] meshes;
 	public GameObject[] items;
 
@@ -43,7 +40,6 @@ public class GameScript : MonoBehaviour
 	public TextMesh text;
 	int instruction = 0;
 	int wallColor = 0;
-
 
     // Use this for initialization
     void Start()
