@@ -22,10 +22,12 @@ public class GameScript : MonoBehaviour
     private bool colorSet = false;
     private bool itemIntersect = false;
     private Color setter;
+    string instructionText;
+    private int level = 1;
+
 
     public GameObject[] walls = new GameObject[4];
 	private MeshRenderer[] meshes;
-
 	public GameObject[] items;
 
 	bool[] totalAmountFlags = {false, false};
@@ -45,7 +47,6 @@ public class GameScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        setNewInstructions("Test");
         Mute = false;
         ChangeSound(Mute);
 
@@ -54,6 +55,7 @@ public class GameScript : MonoBehaviour
 		{
 			meshes[i] = walls[i].GetComponent<MeshRenderer>();
 		}
+        newInstructions();
     }
 
     // Update is called once per frame
@@ -168,7 +170,6 @@ public class GameScript : MonoBehaviour
                 instruction = Random.Range(0, 5);
                 wallColor = Random.Range(1, 3);
                 if (instruction > 0 && wallColor == 1)
-                    
                     text.text = "Måla " + instruction + "väggar " + wallColor;
 
                 Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
@@ -265,7 +266,9 @@ public class GameScript : MonoBehaviour
 			int green = winCond[0][GREEN];
 			int white = winCond[0][WHITE];
 
-			for (int i = 0; i < currentCol.Length; i++) 
+            
+
+            for (int i = 0; i < currentCol.Length; i++) 
 			{
 				if(currentCol[i] == BLUE)
 					blue --;
@@ -283,10 +286,6 @@ public class GameScript : MonoBehaviour
 		}
 		else
 		{
-			for( int i = 0; i < currentCol.Length; i++)
-			{
-				print(currentCol[i] + " : " + winCond[0][i]);
-			}
 			if(Enumerable.SequenceEqual(currentCol, winCond[0]))
 			{
 				correctCol = true;
@@ -365,11 +364,7 @@ public class GameScript : MonoBehaviour
 	{
 		//function for leveling up. Should probably be merged with Victory, but good for showing the concept right now
 	}
-	private void newInstructions()
-	{
-        //setNewInstructions();
-        //function for changing the instructions.
-    }
+
     public void setNewInstructions(string winInstructrions)
     {
         instr.text = winInstructrions;
@@ -402,6 +397,91 @@ public class GameScript : MonoBehaviour
         {
             Mute = true;
             ChangeSound(Mute);
+        }
+    }
+
+    private void newInstructions()
+    {
+        //function for changing the instructions.
+        int numItems = 0;
+        if (level == 1)
+        {
+            numItems = 1;
+        }
+        else if (level == 2)
+        {
+            numItems = Mathf.FloorToInt(Random.Range(1f, items.Length));
+        }
+
+        totalAmountFlags = new bool[numItems + 1];
+        winCond = new int[numItems + 1][];
+
+        bool totalColor = Random.Range(0f, 2f) > 1f;
+        totalAmountFlags[0] = totalColor;
+        winCond[0] = new int[4];
+        if (totalColor)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int index = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                winCond[0][index] = winCond[0][index] + 1;
+            }
+            string colText = "";
+            for (int i = 0; i < winCond[0].Length; i++)
+            {
+                int colNumb = winCond[0][i];
+                if (colNumb > 0)
+                {
+                    string colName = getColName(i);
+                    instructionText = instructionText + "Vi vill ha " + colNumb + " " + colName + "a väggar. \n";
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int colour = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                winCond[0][i] = colour;
+                string colName = getColName(colour);
+                instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
+            }
+        }
+
+        for (int i = 1; i < numItems + 1; i++)
+        {
+            totalAmountFlags[i] = true;
+            //bool specialCase = Random.Range(0f, 2f) > 1f;
+            //if (specialCase)
+            //{
+            int num = Mathf.FloorToInt(Random.Range(1, 10));
+            winCond[i] = new int[1] { num };
+            instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
+            //}
+        }
+        print(instructionText);
+        setNewInstructions(instructionText);
+    }
+
+    private string getColName(int i)
+    {
+        switch (i)
+        {
+            case BLUE:
+                return "blå";
+                break;
+            case RED:
+                return "röd";
+                break;
+            case GREEN:
+                return "grön";
+                break;
+            case WHITE:
+                return "vit";
+                break;
+            default:
+                return "YOU FUCKED UP SON";
+                break;
         }
     }
 }
