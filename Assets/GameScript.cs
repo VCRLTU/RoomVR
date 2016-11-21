@@ -14,6 +14,8 @@ public class GameScript : MonoBehaviour
     private const int RED = 1;
     private const int GREEN = 2;
     private const int WHITE = 3;
+    private const int NUMBER_OF_COLORS = 4;
+    private const float ALMOST_ONE = 0.99999999999999999999999999999999999999999999999999f;
 	
 
     private GameObject itemHeld;
@@ -23,7 +25,7 @@ public class GameScript : MonoBehaviour
     private bool itemIntersect = false;
     private Color setter;
     string instructionText;
-    private int level = 1;
+    private int level = 2;
 
 
     public GameObject[] walls = new GameObject[4];
@@ -410,7 +412,7 @@ public class GameScript : MonoBehaviour
         }
         else if (level == 2)
         {
-            numItems = Mathf.FloorToInt(Random.Range(1f, items.Length));
+            numItems = Mathf.FloorToInt(Random.Range(1f, items.Length + ALMOST_ONE));
         }
 
         totalAmountFlags = new bool[numItems + 1];
@@ -423,7 +425,7 @@ public class GameScript : MonoBehaviour
         {
             for (int i = 0; i < 4; i++)
             {
-                int index = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                int index = Mathf.FloorToInt(Random.Range(0f, NUMBER_OF_COLORS - 1 + ALMOST_ONE));
                 winCond[0][index] = winCond[0][index] + 1;
             }
             string colText = "";
@@ -441,7 +443,7 @@ public class GameScript : MonoBehaviour
         {
             for (int i = 0; i < 4; i++)
             {
-                int colour = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                int colour = Mathf.FloorToInt(Random.Range(0f, NUMBER_OF_COLORS - 1 + ALMOST_ONE));
                 winCond[0][i] = colour;
                 string colName = getColName(colour);
                 instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
