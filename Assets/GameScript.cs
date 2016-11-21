@@ -26,6 +26,8 @@ public class GameScript : MonoBehaviour
     private Color setter;
     string instructionText;
     private int level = 2;
+    private bool multiplay = false;
+    private bool placer = false;
 
 
     public GameObject[] walls = new GameObject[4];
@@ -485,5 +487,18 @@ public class GameScript : MonoBehaviour
                 return "YOU FUCKED UP SON";
                 break;
         }
+    }
+
+    public void multiplayerMode(bool enabled)
+    {
+        multiplay = enabled;
+    }
+    public void multiplayerRole(bool isPlacer)
+    {
+        this.placer = isPlacer;
+    }
+    public void seed(int seed)
+    {
+        Random.InitState(seed);
     }
 }
