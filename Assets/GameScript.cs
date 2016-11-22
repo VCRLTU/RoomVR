@@ -499,7 +499,7 @@ public class GameScript : MonoBehaviour
 		case WHITE:
 			return new Color(1, 1, 1);
 		default:
-			return null;	
+			throw new UnityException ();	
 		}
 	}
 
@@ -541,7 +541,7 @@ public class GameScript : MonoBehaviour
 					bool set = false;
 					while(!set)
 					{
-						int index = Mathf.Floor(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
+						int index = Mathf.FloorToInt(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
 						if(cols[index] > 0)
 						{
 							cols[index] = cols[index] -1;
@@ -573,9 +573,12 @@ public class GameScript : MonoBehaviour
 						{
 							float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - + collider.bounds.extents.x);
 							float up = Random.Range(0, WALL_HEIGHT - collider.bounds.extents.y);											//SHOULD THIS BE Z?
-							Transform wall = walls[Mathf.FloorToInt(Random.Range(0, walls.Length + ALMOST_ONE))];
+							int wIndex = Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE));
+							print (wIndex);
+							print (walls.Length);
+							GameObject wall = walls[wIndex];
 							item.transform.rotation = wall.transform.rotation;
-							Vector3 move = wall.TransformDirection(sideway, up, 0);															//SHOULD Y BE Z?
+							Vector3 move = wall.transform.TransformDirection(sideway, up, 0);															//SHOULD Y BE Z?
 
 							/*float angle = wall.rotation.eulerAngles.y;
 							if((-1 < angle && angle < 1) || (179 < angle && angle < 181))
@@ -607,6 +610,7 @@ public class GameScript : MonoBehaviour
 					
 				}
 			}
+
 			//Code for placeing out items and stufffffffffffffffffffvfffffccfvfgs
 
 		}
