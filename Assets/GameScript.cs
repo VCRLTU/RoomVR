@@ -526,6 +526,7 @@ public class GameScript : MonoBehaviour
     {
         Random.InitState(seed);
 		seedMenu.SetActive(false);
+        initReady();
     }
 	public void initReady()
 	{
