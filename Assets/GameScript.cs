@@ -175,11 +175,11 @@ public class GameScript : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                instruction = Random.Range(0, 5);
+                /*instruction = Random.Range(0, 5);
                 wallColor = Random.Range(1, 3);
                 if (instruction > 0 && wallColor == 1)
                     text.text = "Måla " + instruction + "väggar " + wallColor;
-
+				*/
                 Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
                 if (hit.transform)
                 {
@@ -187,8 +187,7 @@ public class GameScript : MonoBehaviour
                     {
                         if (colorSet && hit.transform.tag == "Paintable")
                         {
-                            MeshRenderer mesh;
-                            mesh = hit.collider.GetComponent<MeshRenderer>();
+                            MeshRenderer mesh = hit.collider.GetComponent<MeshRenderer>();
                             mesh.material.color = setter;
                             CheckWin();
                         }
