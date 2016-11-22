@@ -7,6 +7,7 @@ public class GameScript : MonoBehaviour
 {
 
     private const float WALL_LEN = 2f;
+	private const float WALL_HEIGHT = WALL_LEN;
     private const int LAYER_WALL = 8;
     private const int LAYER_MOVE = 9;
     private const float Y_ITEMOFFSET = 0.001f;
@@ -14,6 +15,8 @@ public class GameScript : MonoBehaviour
     private const int RED = 1;
     private const int GREEN = 2;
     private const int WHITE = 3;
+    private const int NUMBER_OF_COLORS = 4;
+    private const float ALMOST_ONE = 0.99999999999999999999999999999999999999999999999999f;
 	
 
     private GameObject itemHeld;
@@ -22,16 +25,21 @@ public class GameScript : MonoBehaviour
     private bool colorSet = false;
     private bool itemIntersect = false;
     private Color setter;
-    string instructionText;
-    private int level = 1;
+    private string instructionText;
+    private int level = 2;
+    private bool multiplay = false;
+    private bool placer = false;
 
-
+	public GameObject room;
+	public GameObject singMultiMenu;
+	public GameObject roleMenu;
+	public GameObject seedMenu;
     public GameObject[] walls = new GameObject[4];
 	private MeshRenderer[] meshes;
 	public GameObject[] items;
 
-	bool[] totalAmountFlags = {false, false};
-	int[][] winCond = new int[][] 
+	private bool[] totalAmountFlags = {false, false};
+	private int[][] winCond = new int[][] 
 	{
 		new int[] {BLUE, RED , RED , BLUE},
 		new int[] {1, 0, 0, 0}
@@ -47,6 +55,7 @@ public class GameScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+		room.SetActive(false);
         Mute = false;
         ChangeSound(Mute);
 
@@ -55,7 +64,6 @@ public class GameScript : MonoBehaviour
 		{
 			meshes[i] = walls[i].GetComponent<MeshRenderer>();
 		}
-        newInstructions();
     }
 
     // Update is called once per frame
@@ -108,13 +116,13 @@ public class GameScript : MonoBehaviour
                     //end of bad solution
                     itemHeld.transform.rotation = hit.transform.rotation;
                     //Weird and long way to make sure the item held doesn't go half outside the walls (snaps to the edges)
-                    if (hit.point.x < 2.02f - itemColider.bounds.extents.x)
+                    if (hit.point.x < WALL_LEN + 0.02f - itemColider.bounds.extents.x)
                     {
-                        if (hit.point.x > -2.02f + itemColider.bounds.extents.x)
+						if (hit.point.x > - (WALL_LEN +0.02f) + itemColider.bounds.extents.x)
                         {
-                            if (hit.point.z < 2.02f - itemColider.bounds.extents.z)
+							if (hit.point.z < (WALL_LEN +0.02f) - itemColider.bounds.extents.z)
                             {
-                                if (hit.point.z > -2.02f + itemColider.bounds.extents.z)
+								if (hit.point.z > -(WALL_LEN +0.02f) + itemColider.bounds.extents.z)
                                 {
                                     itemHeld.transform.position = point;
                                 }
@@ -143,7 +151,7 @@ public class GameScript : MonoBehaviour
                     }
 
                     //Same as above but only for y axis
-                    if (hit.point.y < 2f - itemColider.bounds.extents.y)
+					if (hit.point.y < WALL_HEIGHT - itemColider.bounds.extents.y)
                     {
                         if (hit.point.y > 0f + itemColider.bounds.extents.y)
                         {
@@ -410,7 +418,7 @@ public class GameScript : MonoBehaviour
         }
         else if (level == 2)
         {
-            numItems = Mathf.FloorToInt(Random.Range(1f, items.Length));
+            numItems = Mathf.FloorToInt(Random.Range(1f, items.Length + ALMOST_ONE));
         }
 
         totalAmountFlags = new bool[numItems + 1];
@@ -423,10 +431,9 @@ public class GameScript : MonoBehaviour
         {
             for (int i = 0; i < 4; i++)
             {
-                int index = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                int index = Mathf.FloorToInt(Random.Range(0f, NUMBER_OF_COLORS - 1 + ALMOST_ONE));
                 winCond[0][index] = winCond[0][index] + 1;
             }
-            string colText = "";
             for (int i = 0; i < winCond[0].Length; i++)
             {
                 int colNumb = winCond[0][i];
@@ -441,7 +448,7 @@ public class GameScript : MonoBehaviour
         {
             for (int i = 0; i < 4; i++)
             {
-                int colour = Mathf.FloorToInt(Random.Range(0f, 3.9999999999999999999999999999999f));
+                int colour = Mathf.FloorToInt(Random.Range(0f, NUMBER_OF_COLORS - 1 + ALMOST_ONE));
                 winCond[0][i] = colour;
                 string colName = getColName(colour);
                 instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
@@ -469,19 +476,139 @@ public class GameScript : MonoBehaviour
         {
             case BLUE:
                 return "blå";
-                break;
             case RED:
                 return "röd";
-                break;
             case GREEN:
                 return "grön";
-                break;
             case WHITE:
                 return "vit";
-                break;
             default:
-                return "YOU FUCKED UP SON";
-                break;
+                return "If you see this, something is wrong.";
         }
     }
+	private Color getColor(int i)
+	{
+		switch(i)
+		{
+		case BLUE:
+			return new Color(0, 0, 1);
+		case RED: 
+			return new Color(1, 0, 0);
+		case GREEN:
+			return new Color(0, 1, 0);
+		case WHITE:
+			return new Color(1, 1, 1);
+		default:
+			return null;	
+		}
+	}
+
+    public void multiplayerMode(bool enabled)
+    {
+        multiplay = enabled;
+		singMultiMenu.SetActive(false);
+		if(multiplay)
+		{
+			roleMenu.SetActive(true);
+		}
+		else
+		{
+			initReady();
+		}
+    }
+    public void multiplayerRole(bool isPlacer)
+    {
+        this.placer = isPlacer;
+		roleMenu.SetActive(false);
+		seedMenu.SetActive(true);
+    }
+    public void seed(int seed)
+    {
+        Random.InitState(seed);
+		seedMenu.SetActive(false);
+    }
+	public void initReady()
+	{
+		newInstructions();
+		room.SetActive(true);
+		if(multiplay)
+		{
+			if(totalAmountFlags[0])
+			{
+				int[] cols = winCond[0];
+				foreach(MeshRenderer mesh in meshes)
+				{
+					bool set = false;
+					while(!set)
+					{
+						int index = Mathf.Floor(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
+						if(cols[index] > 0)
+						{
+							cols[index] = cols[index] -1;
+							mesh.material.color = getColor(index);
+							set = true;
+						}
+					}
+				}
+			}
+			else
+			{
+				for(int i = 0; i < winCond[0].Length; i++)
+				{
+					meshes[i].material.color = getColor(winCond[0][i]);
+				}
+			}
+			for(int i = 1; i < winCond.Length; i++)
+			{
+				if(totalAmountFlags[i])
+				{
+					for (int count = winCond[i][0]; count > 0; count--)
+					{
+						GameObject item = Instantiate(items[i-1]);
+						ItemScript script = item.GetComponent<ItemScript>();
+						Collider collider = item.GetComponent<Collider>();
+						bool set = false;
+						int failiours = 0;
+						while(!set)
+						{
+							float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - + collider.bounds.extents.x);
+							float up = Random.Range(0, WALL_HEIGHT - collider.bounds.extents.y);											//SHOULD THIS BE Z?
+							Transform wall = walls[Mathf.FloorToInt(Random.Range(0, walls.Length + ALMOST_ONE))];
+							item.transform.rotation = wall.transform.rotation;
+							Vector3 move = wall.TransformDirection(sideway, up, 0);															//SHOULD Y BE Z?
+
+							/*float angle = wall.rotation.eulerAngles.y;
+							if((-1 < angle && angle < 1) || (179 < angle && angle < 181))
+							{
+								move = new Vector3(sideway, up, 0);
+							}
+							else if ((89 < angle && angle < 91) || (269 < angle && angle < 271))
+							{
+								move = new Vector3(0, up, sideway);
+							}*/
+
+							item.transform.position = move;
+							if(!script.isTriggered())
+								set = true;
+							
+							else if(failiours > 10)
+							{
+								set = true;
+								winCond[i][0] = winCond[i][0] - 1;
+							}
+							else
+								failiours ++;
+						}
+					}
+				
+				}
+				else
+				{
+					
+				}
+			}
+			//Code for placeing out items and stufffffffffffffffffffvfffffccfvfgs
+
+		}
+	}
 }
