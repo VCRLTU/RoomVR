@@ -17,6 +17,7 @@ public class GameScript : MonoBehaviour
     private const int WHITE = 3;
     private const int NUMBER_OF_COLORS = 4;
     private const float ALMOST_ONE = 0.99999999999999999999999999999999999999999999999999f;
+	private const float OFFSET_FROM_WALL = 0.1f;
 	
 
     private GameObject itemHeld;
@@ -79,16 +80,9 @@ public class GameScript : MonoBehaviour
                 {
                     if (itemIntersect == false)
                     {
-                        float y = hit.transform.rotation.eulerAngles.y;
-                        Vector3 point = itemHeld.transform.position;
-                        if (y > -1 && y < 1)
-                            point.z = point.z + 0.01f;
-                        if (y > 89 && y < 91)
-                            point.x = point.x + 0.01f;
-                        if (y > 179 && y < 181)
-                            point.z = point.z - 0.01f;
-                        if (y > 269 && y < 271)
-                            point.x = point.x - 0.01f;
+						Vector3 point = hit.transform.InverseTransformDirection(itemHeld.transform.position);
+						point.z = point.z + OFFSET_FROM_WALL;
+						point = hit.transform.TransformDirection(point);
 
 						itemHeld.transform.parent = hit.transform;
                         itemHeld.transform.position = point;
@@ -102,73 +96,27 @@ public class GameScript : MonoBehaviour
                 else //If not clicking
                 {
                     Vector3 point = hit.point;
-                    //Bad solution
-                    float y = hit.transform.rotation.eulerAngles.y;
-                    if (y > -1 && y < 1)
-                        point.z = point.z - 0.01f;
-                    if (y > 89 && y < 91)
-                        point.x = point.x - 0.01f;
-                    if (y > 179 && y < 181)
-                        point.z = point.z + 0.01f;
-                    if (y > 269 && y < 271)
-                        point.x = point.x + 0.01f;
+					Vector3 localPoint = hit.transform.InverseTransformDirection(point);
+					localPoint.z = localPoint.z - OFFSET_FROM_WALL;
 
-                    //end of bad solution
                     itemHeld.transform.rotation = hit.transform.rotation;
-                    //Weird and long way to make sure the item held doesn't go half outside the walls (snaps to the edges)
-                    if (hit.point.x < WALL_LEN + 0.02f - itemColider.bounds.extents.x)
-                    {
-						if (hit.point.x > - (WALL_LEN +0.02f) + itemColider.bounds.extents.x)
-                        {
-							if (hit.point.z < (WALL_LEN +0.02f) - itemColider.bounds.extents.z)
-                            {
-								if (hit.point.z > -(WALL_LEN +0.02f) + itemColider.bounds.extents.z)
-                                {
-                                    itemHeld.transform.position = point;
-                                }
-                                else
-                                {
-                                    point.z = -hit.collider.bounds.extents.z + itemColider.bounds.extents.z;
-                                    itemHeld.transform.position = point;
-                                }
-                            }
-                            else
-                            {
-                                point.z = hit.collider.bounds.extents.z - itemColider.bounds.extents.z;
-                                itemHeld.transform.position = point;
-                            }
-                        }
-                        else
-                        {
-                            point.x = -hit.collider.bounds.extents.x + itemColider.bounds.extents.x;
-                            itemHeld.transform.position = point;
-                        }
-                    }
-                    else
-                    {
-                        point.x = hit.collider.bounds.extents.x - itemColider.bounds.extents.x;
-                        itemHeld.transform.position = point;
-                    }
 
-                    //Same as above but only for y axis
-					if (hit.point.y < WALL_HEIGHT - itemColider.bounds.extents.y)
-                    {
-                        if (hit.point.y > 0f + itemColider.bounds.extents.y)
-                        {
-                            //Do nothing
-                        }
-                        else
-                        {
-                            point.y = -hit.collider.bounds.extents.y + itemColider.bounds.extents.y + 1 + Y_ITEMOFFSET;
-                            itemHeld.transform.position = point;
-                        }
-                    }
-                    else
-                    {
-                        point.y = hit.collider.bounds.extents.y - itemColider.bounds.extents.y + 1 - Y_ITEMOFFSET;
-                        itemHeld.transform.position = point;
-                    }
-                }
+					//To make item stick to the edges
+					Vector3 localExtent = hit.transform.InverseTransformDirection(itemColider.bounds.extents);
+					localExtent.x = Mathf.Abs(localExtent.x);
+
+					if(localPoint.x > WALL_LEN - localExtent.x)
+						localPoint.x = WALL_LEN - localExtent.x;
+					else if(localPoint.x < -WALL_LEN + localExtent.x)
+						localPoint.x = -WALL_LEN + localExtent.x;
+					if(localPoint.y > WALL_HEIGHT - localExtent.y)
+						localPoint.y = WALL_HEIGHT - localExtent.y; 
+					else if(localPoint.y < 0 + localExtent.y)
+						localPoint.y = 0 + localExtent.y;
+					itemHeld.transform.position = hit.transform.TransformDirection(localPoint);
+
+                    
+				} // end of If not clicking
             }
         }
         else //not holding item
@@ -336,17 +284,16 @@ public class GameScript : MonoBehaviour
 			}
 			if (correctCol && correctItems)
 			{
-				print("Win");
 				Victory();
 			}
 			else
 			{
-				print("not win " + correctCol.ToString() + " and " + correctItems.ToString());
+			
 			}
 		//}
     }
 
-	private void Victory()
+	private void clearLevel()
 	{
 		foreach (GameObject wall in walls)
 		{
@@ -362,6 +309,12 @@ public class GameScript : MonoBehaviour
 		{
 			mesh.material.color = white;
 		}
+
+	}
+
+	private void Victory()
+	{
+		clearLevel();
 		text.text = "Du vinner!";
 		levelUp();
 		newInstructions();
@@ -571,48 +524,75 @@ public class GameScript : MonoBehaviour
 						int failiours = 0;
 						while(!set)
 						{
-							float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - + collider.bounds.extents.x);
-							float up = Random.Range(0, WALL_HEIGHT - collider.bounds.extents.y);											//SHOULD THIS BE Z?
+							float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - collider.bounds.extents.x);
+							float up = Random.Range(0 + collider.bounds.extents.y, WALL_HEIGHT - collider.bounds.extents.y);
 							int wIndex = Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE));
-							print (wIndex);
-							print (walls.Length);
 							GameObject wall = walls[wIndex];
 							item.transform.rotation = wall.transform.rotation;
-							Vector3 move = wall.transform.TransformDirection(sideway, up, 0);															//SHOULD Y BE Z?
+							Vector3 move = wall.transform.TransformDirection(sideway, up, WALL_LEN);
 
-							/*float angle = wall.rotation.eulerAngles.y;
-							if((-1 < angle && angle < 1) || (179 < angle && angle < 181))
+							if(!Physics.CheckBox(move, collider.bounds.extents, item.transform.rotation, (1<<LAYER_MOVE))) //Kinda works....
 							{
-								move = new Vector3(sideway, up, 0);
+								set = true;
+								item.transform.position = move;
+								item.transform.parent = wall;
 							}
-							else if ((89 < angle && angle < 91) || (269 < angle && angle < 271))
-							{
-								move = new Vector3(0, up, sideway);
-							}*/
 
-							item.transform.position = move;
-							if(!script.isTriggered())
-								set = true;
-							
-							else if(failiours > 10)
+							else if(failiours > 5)
 							{
 								set = true;
+								Destroy(item);
 								winCond[i][0] = winCond[i][0] - 1;
 							}
 							else
 								failiours ++;
 						}
 					}
-				
 				}
 				else
 				{
-					
+					for (int wallIndex = 0; wallIndex < winCond[i].Length; wallIndex ++)
+					{
+
+						for (int count = winCond[i][wallIndex]; count > 0; count--)
+						{
+							GameObject wall = walls[wallIndex];
+							GameObject item = Instantiate(items[i-1], wall);
+							ItemScript script = item.GetComponent<ItemScript>();
+							Collider collider = item.GetComponent<Collider>();
+							bool set = false;
+							int failiours = 0;
+							while(!set)
+							{
+								float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - collider.bounds.extents.x);
+								float up = Random.Range(0 + collider.bounds.extents.y, WALL_HEIGHT - collider.bounds.extents.y);
+								item.transform.rotation = wall.transform.rotation;
+								Vector3 move = wall.transform.TransformDirection(sideway, up, WALL_LEN);
+
+								if(!Physics.CheckBox(move, collider.bounds.extents, item.transform.rotation, (1<<LAYER_MOVE))) //Kinda works....
+								{
+									set = true;
+									item.transform.position = move;
+								}
+
+								else if(failiours > 5)
+								{
+									set = true;
+									Destroy(item);
+									winCond[i][0] = winCond[i][0] - 1;
+								}
+								else
+									failiours ++;
+							}
+						}
+					}
+				}
+
+				if(!placer)
+				{
+					clearLevel();
 				}
 			}
-
-			//Code for placeing out items and stufffffffffffffffffffvfffffccfvfgs
-
 		}
 	}
 }

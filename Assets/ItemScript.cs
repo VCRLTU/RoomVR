@@ -5,6 +5,7 @@ public class ItemScript : MonoBehaviour {
 
 	GameScript holder = null;
 	bool triggered = false;
+	int trigAmount = 0;
 
 
 	public void setHolder( GameScript gs)
@@ -19,6 +20,7 @@ public class ItemScript : MonoBehaviour {
 
 	void OnTriggerEnter() 
 	{
+		trigAmount ++;
 		triggered = true;
 		if(holder)
 			holder.IntersectTrue();
@@ -26,10 +28,16 @@ public class ItemScript : MonoBehaviour {
 
 	void OnTriggerExit() 
 	{
-		triggered = false;
-		if(holder)
-			holder.IntersectFalse();	
+		trigAmount --;
+		print (trigAmount);
+		if(!(trigAmount > 0))
+		{
+			triggered = false;
+			if(holder)
+				holder.IntersectFalse();	
+		}
 	}
+
 	public bool isTriggered()
 	{
 		return triggered;
