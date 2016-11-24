@@ -10,6 +10,7 @@ public class GameScript : MonoBehaviour
 	private const float WALL_HEIGHT = WALL_LEN;
     private const int LAYER_WALL = 8;
     private const int LAYER_MOVE = 9;
+	private const int LAYER_BOARD = 10;
     private const float Y_ITEMOFFSET = 0.001f;
     private const int BLUE = 0;
     private const int RED = 1;
@@ -70,98 +71,101 @@ public class GameScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        RaycastHit hit;
-        if (holdingItem)
-        {
-            Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL));
-            if (hit.transform)
-            {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    if (itemIntersect == false)
-                    {
-						Vector3 point = hit.transform.InverseTransformDirection(itemHeld.transform.position);
-						point.z = point.z + OFFSET_FROM_WALL;
-						point = hit.transform.TransformDirection(point);
+		if(!(multiplay && !placer))
+		{
+	        RaycastHit hit;
+	        if (holdingItem)
+	        {
+	            Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL));
+	            if (hit.transform)
+	            {
+	                if (Input.GetMouseButtonDown(0))
+	                {
+	                    if (itemIntersect == false)
+	                    {
+							Vector3 point = hit.transform.InverseTransformDirection(itemHeld.transform.position);
+							point.z = point.z + OFFSET_FROM_WALL;
+							point = hit.transform.TransformDirection(point);
 
-						itemHeld.transform.parent = hit.transform;
-                        itemHeld.transform.position = point;
-                        itemHeld.layer = LAYER_MOVE;
-                        itemHeld.GetComponent<ItemScript>().removeHolder();
-                        holdingItem = false;
-                        itemHeld = null;
-                    }
-                    CheckWin();
-                }
-                else //If not clicking
-                {
-                    Vector3 point = hit.point;
-					Vector3 localPoint = hit.transform.InverseTransformDirection(point);
-					localPoint.z = localPoint.z - OFFSET_FROM_WALL;
+							itemHeld.transform.parent = hit.transform;
+	                        itemHeld.transform.position = point;
+	                        itemHeld.layer = LAYER_MOVE;
+	                        itemHeld.GetComponent<ItemScript>().removeHolder();
+	                        holdingItem = false;
+	                        itemHeld = null;
+	                    }
+	                    CheckWin();
+	                }
+	                else //If not clicking
+	                {
+	                    Vector3 point = hit.point;
+						Vector3 localPoint = hit.transform.InverseTransformDirection(point);
+						localPoint.z = localPoint.z - OFFSET_FROM_WALL;
 
-                    itemHeld.transform.rotation = hit.transform.rotation;
+	                    itemHeld.transform.rotation = hit.transform.rotation;
 
-					//To make item stick to the edges
-					Vector3 localExtent = hit.transform.InverseTransformDirection(itemColider.bounds.extents);
-					localExtent.x = Mathf.Abs(localExtent.x);
+						//To make item stick to the edges
+						Vector3 localExtent = hit.transform.InverseTransformDirection(itemColider.bounds.extents);
+						localExtent.x = Mathf.Abs(localExtent.x);
 
-					if(localPoint.x > WALL_LEN - localExtent.x)
-						localPoint.x = WALL_LEN - localExtent.x;
-					else if(localPoint.x < -WALL_LEN + localExtent.x)
-						localPoint.x = -WALL_LEN + localExtent.x;
-					if(localPoint.y > WALL_HEIGHT - localExtent.y)
-						localPoint.y = WALL_HEIGHT - localExtent.y; 
-					else if(localPoint.y < 0 + localExtent.y)
-						localPoint.y = 0 + localExtent.y;
-					itemHeld.transform.position = hit.transform.TransformDirection(localPoint);
+						if(localPoint.x > WALL_LEN - localExtent.x)
+							localPoint.x = WALL_LEN - localExtent.x;
+						else if(localPoint.x < -WALL_LEN + localExtent.x)
+							localPoint.x = -WALL_LEN + localExtent.x;
+						if(localPoint.y > WALL_HEIGHT - localExtent.y)
+							localPoint.y = WALL_HEIGHT - localExtent.y; 
+						else if(localPoint.y < 0 + localExtent.y)
+							localPoint.y = 0 + localExtent.y;
+						itemHeld.transform.position = hit.transform.TransformDirection(localPoint);
 
-                    
-				} // end of If not clicking
-            }
-        }
-        else //not holding item
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                /*instruction = Random.Range(0, 5);
-                wallColor = Random.Range(1, 3);
-                if (instruction > 0 && wallColor == 1)
-                    text.text = "Måla " + instruction + "väggar " + wallColor;
-				*/
-                Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE));
-                if (hit.transform)
-                {
-                    if (!holdingItem)
-                    {
-                        if (colorSet && hit.transform.tag == "Paintable")
-                        {
-                            MeshRenderer mesh = hit.collider.GetComponent<MeshRenderer>();
-                            mesh.material.color = setter;
-                            CheckWin();
-                        }
-                        else if (hit.transform.tag == "Moveable")
-                        {
-                            holdingItem = true;
-                            itemHeld = hit.transform.gameObject;
-                            itemColider = itemHeld.GetComponent<Collider>();
-                            itemHeld.layer = 0;
-                            itemHeld.GetComponent<ItemScript>().setHolder(this);
-							itemHeld.transform.parent = null;
-                        }
-                        else if (hit.transform.tag == "Dupe") //Placeholder
-                        {
-                            holdingItem = true;
-                            itemHeld = Instantiate(hit.collider.gameObject);
-                            itemColider = itemHeld.GetComponent<Collider>();
-                            itemHeld.tag = "Moveable";
-                            itemHeld.layer = 0;
-                            itemHeld.GetComponent<ItemScript>().setHolder(this);
-							itemHeld.transform.parent = null;
-                        }
-                    }
-                }
-            }
-        }
+	                    
+					} // end of If not clicking
+	            }
+	        }
+	        else //not holding item
+	        {
+	            if (Input.GetMouseButtonDown(0))
+	            {
+	                /*instruction = Random.Range(0, 5);
+	                wallColor = Random.Range(1, 3);
+	                if (instruction > 0 && wallColor == 1)
+	                    text.text = "Måla " + instruction + "väggar " + wallColor;
+					*/
+					Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, (1 << LAYER_WALL) + (1 << LAYER_MOVE) + (1 << LAYER_BOARD));
+	                if (hit.transform)
+	                {
+	                    if (!holdingItem)
+	                    {
+	                        if (colorSet && hit.transform.tag == "Paintable")
+	                        {
+	                            MeshRenderer mesh = hit.collider.GetComponent<MeshRenderer>();
+	                            mesh.material.color = setter;
+	                            CheckWin();
+	                        }
+	                        else if (hit.transform.tag == "Moveable")
+	                        {
+	                            holdingItem = true;
+	                            itemHeld = hit.transform.gameObject;
+	                            itemColider = itemHeld.GetComponent<Collider>();
+	                            itemHeld.layer = 0;
+	                            itemHeld.GetComponent<ItemScript>().setHolder(this);
+								itemHeld.transform.parent = null;
+	                        }
+	                        else if (hit.transform.tag == "Dupe") //Placeholder
+	                        {
+	                            holdingItem = true;
+	                            itemHeld = Instantiate(hit.collider.gameObject);
+	                            itemColider = itemHeld.GetComponent<Collider>();
+	                            itemHeld.tag = "Moveable";
+	                            itemHeld.layer = 0;
+	                            itemHeld.GetComponent<ItemScript>().setHolder(this);
+								itemHeld.transform.parent = null;
+	                        }
+	                    }
+	                }
+	            }
+	        }
+		}
     }
 
     public void setRed()
@@ -460,13 +464,9 @@ public class GameScript : MonoBehaviour
         multiplay = enabled;
 		singMultiMenu.SetActive(false);
 		if(multiplay)
-		{
 			roleMenu.SetActive(true);
-		}
 		else
-		{
 			initReady();
-		}
     }
     public void multiplayerRole(bool isPlacer)
     {
@@ -480,6 +480,46 @@ public class GameScript : MonoBehaviour
 		seedMenu.SetActive(false);
         initReady();
     }
+
+	//Tries to place an item on a wall 5 times, before giving up and reducing win condition instead. If no wall is given, one will be randomized.
+	private void placeItem(int i, int wallIndex = -1)	
+	{
+		bool wallSet = wallIndex != -1;
+		GameObject wall;
+		GameObject item = Instantiate(items[i-1]);
+		Collider collider = item.GetComponent<Collider>();
+		bool set = false;
+		int failiours = 0;
+		while(!set)
+		{
+			float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - collider.bounds.extents.x);
+			float up = Random.Range(0 + collider.bounds.extents.y, WALL_HEIGHT - collider.bounds.extents.y);
+			if(!wallSet)
+				wall = walls[Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE))];
+			else
+				wall = walls[wallIndex];		//If wall is known we don't actually have to set it each loop, but it makes for a neater if statement (that the compiler doens't complain about)
+			item.transform.rotation = wall.transform.rotation;
+			Vector3 move = wall.transform.TransformDirection(sideway, up, WALL_LEN);
+
+			if(!Physics.CheckBox(move, collider.bounds.extents, item.transform.rotation, (1<<LAYER_MOVE) + (1<<LAYER_BOARD))) //Kinda works....
+			{
+				set = true;
+				item.transform.position = move;
+				item.transform.parent = wall.transform;
+			}
+
+			else if(failiours > 5)
+			{
+				set = true;
+				Destroy(item);
+				int conditionIndex = (!wallSet ? 0 : wallIndex);
+				winCond[i][conditionIndex] = winCond[i][conditionIndex] - 1;
+			}
+			else
+				failiours ++;
+		}
+	}
+
 	public void initReady()
 	{
 		newInstructions();
@@ -517,78 +557,21 @@ public class GameScript : MonoBehaviour
 				{
 					for (int count = winCond[i][0]; count > 0; count--)
 					{
-						GameObject item = Instantiate(items[i-1]);
-						ItemScript script = item.GetComponent<ItemScript>();
-						Collider collider = item.GetComponent<Collider>();
-						bool set = false;
-						int failiours = 0;
-						while(!set)
-						{
-							float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - collider.bounds.extents.x);
-							float up = Random.Range(0 + collider.bounds.extents.y, WALL_HEIGHT - collider.bounds.extents.y);
-							int wIndex = Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE));
-							GameObject wall = walls[wIndex];
-							item.transform.rotation = wall.transform.rotation;
-							Vector3 move = wall.transform.TransformDirection(sideway, up, WALL_LEN);
-
-							if(!Physics.CheckBox(move, collider.bounds.extents, item.transform.rotation, (1<<LAYER_MOVE))) //Kinda works....
-							{
-								set = true;
-								item.transform.position = move;
-								item.transform.parent = wall;
-							}
-
-							else if(failiours > 5)
-							{
-								set = true;
-								Destroy(item);
-								winCond[i][0] = winCond[i][0] - 1;
-							}
-							else
-								failiours ++;
-						}
+						placeItem(i);
 					}
 				}
 				else
 				{
 					for (int wallIndex = 0; wallIndex < winCond[i].Length; wallIndex ++)
 					{
-
 						for (int count = winCond[i][wallIndex]; count > 0; count--)
 						{
-							GameObject wall = walls[wallIndex];
-							GameObject item = Instantiate(items[i-1], wall);
-							ItemScript script = item.GetComponent<ItemScript>();
-							Collider collider = item.GetComponent<Collider>();
-							bool set = false;
-							int failiours = 0;
-							while(!set)
-							{
-								float sideway = Random.Range(-WALL_LEN + collider.bounds.extents.x, WALL_LEN - collider.bounds.extents.x);
-								float up = Random.Range(0 + collider.bounds.extents.y, WALL_HEIGHT - collider.bounds.extents.y);
-								item.transform.rotation = wall.transform.rotation;
-								Vector3 move = wall.transform.TransformDirection(sideway, up, WALL_LEN);
-
-								if(!Physics.CheckBox(move, collider.bounds.extents, item.transform.rotation, (1<<LAYER_MOVE))) //Kinda works....
-								{
-									set = true;
-									item.transform.position = move;
-								}
-
-								else if(failiours > 5)
-								{
-									set = true;
-									Destroy(item);
-									winCond[i][0] = winCond[i][0] - 1;
-								}
-								else
-									failiours ++;
-							}
+							placeItem(i, wallIndex);
 						}
 					}
 				}
 
-				if(!placer)
+				if(placer)
 				{
 					clearLevel();
 				}
