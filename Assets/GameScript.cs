@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Gvr;
 using System.Collections;
 using System.Linq;
 
@@ -31,6 +32,14 @@ public class GameScript : MonoBehaviour
     private int level = 2;
     private bool multiplay = false;
     private bool placer = false;
+
+
+	public GvrAudioSource PlaceAudio;
+	public GvrAudioSource GrabAudio;
+	public GvrAudioSource CantPlaceAudio;
+	public GvrAudioSource MenuAudio;
+	public GvrAudioSource VictoryAudio;
+	public GvrAudioSource NotRightAudio;
 
 	public GameObject room;
 	public GameObject singMultiMenu;
@@ -93,7 +102,15 @@ public class GameScript : MonoBehaviour
 	                        itemHeld.GetComponent<ItemScript>().removeHolder();
 	                        holdingItem = false;
 	                        itemHeld = null;
+
+							PlaceAudio.transform.position = point;
+							PlaceAudio.Play();
 	                    }
+						else
+						{
+							CantPlaceAudio.transform.position = hit.point;
+							CantPlaceAudio.Play();
+						}
 	                    CheckWin();
 	                }
 	                else //If not clicking
@@ -150,6 +167,8 @@ public class GameScript : MonoBehaviour
 	                            itemHeld.layer = 0;
 	                            itemHeld.GetComponent<ItemScript>().setHolder(this);
 								itemHeld.transform.parent = null;
+								GrabAudio.transform.position = hit.point;
+								GrabAudio.Play();
 	                        }
 	                        else if (hit.transform.tag == "Dupe") //Placeholder
 	                        {
@@ -198,6 +217,7 @@ public class GameScript : MonoBehaviour
     {
         itemIntersect = false;
     }
+
 
 	public void CheckWin()
     {
@@ -292,7 +312,7 @@ public class GameScript : MonoBehaviour
 			}
 			else
 			{
-			
+				NotRightAudio.Play();
 			}
 		//}
     }
@@ -320,6 +340,7 @@ public class GameScript : MonoBehaviour
 	{
 		clearLevel();
 		text.text = "Du vinner!";
+		VictoryAudio.Play();
 		levelUp();
 		newInstructions();
 	}
@@ -333,6 +354,12 @@ public class GameScript : MonoBehaviour
     {
         instr.text = winInstructrions;
     }
+
+	public void menuSound()
+	{
+		if(!Mute)
+			MenuAudio.Play();
+	}
 
     public void ChangeSound(bool Mute)
     {

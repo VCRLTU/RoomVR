@@ -29,7 +29,6 @@ public class ItemScript : MonoBehaviour {
 	void OnTriggerExit() 
 	{
 		trigAmount --;
-		print (trigAmount);
 		if(!(trigAmount > 0))
 		{
 			triggered = false;
