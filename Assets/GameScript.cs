@@ -20,6 +20,13 @@ public class GameScript : MonoBehaviour
     private const int NUMBER_OF_COLORS = 4;
     private const float ALMOST_ONE = 0.99999999999999999999999999999999999999999999999999f;
 	private const float OFFSET_FROM_WALL = 0.1f;
+	private const float POINT_DEDUCTION = 0.9f;
+	private const int MAX_DOUBLEABLE = 4;
+	private const int NUM_SPECIAL_CASES = 4;
+	private const int EQUAL = 0;
+	private const int DIVIDE = 1;
+	private const int DOUBLE = 2;
+	private const int SETAMOUNT = 3;
 	
 
     private GameObject itemHeld;
@@ -32,6 +39,8 @@ public class GameScript : MonoBehaviour
     private int level = 2;
     private bool multiplay = false;
     private bool placer = false;
+	private int levelScore;
+	private int totalScore = 0;
 
 
 	public GvrAudioSource PlaceAudio;
@@ -187,36 +196,6 @@ public class GameScript : MonoBehaviour
 		}
     }
 
-    public void setRed()
-    {
-        setter = new Color(1, 0, 0);
-        colorSet = true;
-    }
-
-    public void setBlue()
-    {
-        setter = new Color(0, 0, 1);
-        colorSet = true;
-    }
-
-    public void setGreen()
-    {
-        setter = new Color(0, 1, 0);
-        colorSet = true;
-    }
-    public void setWhite()
-    {
-        setter = new Color(1, 1, 1);
-        colorSet = true;
-    }
-    public void IntersectTrue()
-    {
-        itemIntersect = true;
-    }
-    public void IntersectFalse()
-    {
-        itemIntersect = false;
-    }
 
 
 	public void CheckWin()
@@ -271,50 +250,48 @@ public class GameScript : MonoBehaviour
 			}
 		}
 
-		//if(correctCol) 	// If colours aren't correct, we don't need to check anything else. But commented for now for debugging
-		//{
-			bool correctItems = true; //negate if fault found
+		bool correctItems = true; //negate if fault found
 
-			for (int i = 1; i < winCond.Length && correctItems; i++)
+		for (int i = 1; i < winCond.Length && correctItems && correctCol; i++)
+		{
+			if(totalAmountFlags[i]) //If we're only looking at totals
 			{
-				if(totalAmountFlags[i]) //If we're only looking at totals
+				int amount = winCond[i][0];
+				foreach (GameObject wall in walls)
 				{
-					int amount = winCond[i][0];
-					foreach (GameObject wall in walls)
+					foreach (Transform child in wall.transform)
 					{
-						foreach (Transform child in wall.transform)
-						{
-							if(child.name == items[i-1].name + "(Clone)")
-								amount --;
-						}
+						if(child.name == items[i-1].name + "(Clone)")
+							amount --;
+					}
+				}
+				if(amount != 0)
+					correctItems = false;
+			}
+			else  //If looking at specific amount of items at each wall
+			{
+				for (int j = 0; j < winCond[i].Length && correctItems; j++)
+				{
+					int amount = winCond[i][j];
+					foreach (Transform child in walls[j].transform)
+					{
+						if(child.name == items[i-1].name + "(Clone)")
+							amount --;
 					}
 					if(amount != 0)
 						correctItems = false;
 				}
-				else  //If looking at specific amount of items at each wall
-				{
-					for (int j = 0; j < winCond[i].Length && correctItems; j++)
-					{
-						int amount = winCond[i][j];
-						foreach (Transform child in walls[j].transform)
-						{
-							if(child.name == items[i-1].name + "(Clone)")
-								amount --;
-						}
-						if(amount != 0)
-							correctItems = false;
-					}
-				}
 			}
-			if (correctCol && correctItems)
-			{
-				Victory();
-			}
-			else
-			{
-				NotRightAudio.Play();
-			}
-		//}
+		}
+		if (correctCol && correctItems)
+		{
+			Victory();
+		}
+		else
+		{
+			levelScore = Mathf.FloorToInt(levelScore * POINT_DEDUCTION);
+			//NotRightAudio.Play();
+		}
     }
 
 	private void clearLevel()
@@ -338,61 +315,16 @@ public class GameScript : MonoBehaviour
 
 	private void Victory()
 	{
-		clearLevel();
 		text.text = "Du vinner!";
 		VictoryAudio.Play();
 		levelUp();
 		newInstructions();
 	}
 
-	private void levelUp()
-	{
-		//function for leveling up. Should probably be merged with Victory, but good for showing the concept right now
-	}
-
-    public void setNewInstructions(string winInstructrions)
-    {
-        instr.text = winInstructrions;
-    }
-
-	public void menuSound()
-	{
-		if(!Mute)
-			MenuAudio.Play();
-	}
-
-    public void ChangeSound(bool Mute)
-    {
-        if (Mute == false)
-        {
-            // AudioListener.pause = false;
-            AudioText.text = "Audio On";
-            AudioListener.volume = 1;
-        }
-        else
-        {
-            // AudioListener.pause = true;
-            AudioText.text = "Audio Off";
-            AudioListener.volume = 0;
-        }
-    }
-
-    public void toggleSound()
-    {
-        if (Mute == true)
-        {
-            Mute = false;
-            ChangeSound(Mute);
-        }
-        else
-        {
-            Mute = true;
-            ChangeSound(Mute);
-        }
-    }
 
     private void newInstructions()
     {
+		levelScore = 1000 + 400 * (level-1);
         //function for changing the instructions.
         int numItems = 0;
         if (level == 1)
@@ -440,18 +372,119 @@ public class GameScript : MonoBehaviour
 
         for (int i = 1; i < numItems + 1; i++)
         {
-            totalAmountFlags[i] = true;
-            //bool specialCase = Random.Range(0f, 2f) > 1f;
-            //if (specialCase)
-            //{
-            int num = Mathf.FloorToInt(Random.Range(1, 10));
-            winCond[i] = new int[1] { num };
-            instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
-            //}
-        }
+			float chance = Random.Range(0, 3 + level);
+			bool specialCase = chance > 2f;
+			if(specialCase && i > 1)
+			{
+				string caseStr = "";
+				string putWhere = "";
+				string takeWhere = "";
+				int takeIndex = 0;
+				int putIndex;
+				int index = Mathf.FloorToInt(Random.Range(1, i-1+ALMOST_ONE));
+
+				if(totalAmountFlags[index])
+				{
+					takeWhere = " totalt.";
+				}
+				else
+				{
+					for (int j = 0; j< winCond[index].Length; j++)
+					{
+						if(winCond[index][j] != 0)
+						{
+							takeIndex = j;
+							break;
+						}
+					}
+					takeWhere = " på vägg " + takeIndex;
+				}
+
+				int wallIndex;
+				bool totalAmount = Random.value > 0.5f;
+				if(totalAmount)
+				{
+					putWhere = " totalt ";
+					winCond[i] = new int[1];
+					putIndex = 0;
+				}
+				else
+				{
+					wallIndex = Mathf.FloorToInt(Random.Range(0, walls.Length-1+ALMOST_ONE));
+					putWhere = " på vägg " + wallIndex;
+					winCond[i] = new int[4];
+					for (int j = 0; j < winCond[i].Length; j++)
+						winCond[i][j] = 0;
+					putIndex = wallIndex;
+				}
+				int determiner = Mathf.FloorToInt(Random.Range(0, NUM_SPECIAL_CASES -1 + ALMOST_ONE));
+
+
+				int amount = winCond[i][takeIndex];
+
+				bool set = false;
+				while(!set)								//The editor is fucking up the indentation :((( cba to fight it.
+					switch (determiner)
+				{
+				case EQUAL:
+					{
+						winCond[i][putIndex] = winCond[index][takeIndex];
+
+						caseStr = "lika många " + items[i-1].name + " som " +items[index-1].name;
+						set = true;
+						break;
+					}
+				case DIVIDE:
+					{
+						if (amount % 2 == 0 && amount >= 2)
+						{
+							winCond[i][putIndex] = winCond[index][takeIndex] / 2;
+
+							caseStr = "hälften så många " + items[i-1].name + " som " + items[index-1].name;
+							set = true;
+						}
+						else if(amount < MAX_DOUBLEABLE)
+							determiner = DOUBLE;
+						else
+							determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
+						break;
+					}
+				case DOUBLE:
+					if(amount <= MAX_DOUBLEABLE)
+					{
+						winCond[i][putIndex] = winCond[index][takeIndex] * 2;
+						caseStr = "dubbelt så många " + items[i-1].name + " som " + items[index-1].name;
+						set = true;
+					}
+					else if(amount % 2 == 0)
+						determiner = DIVIDE;
+					else 
+						determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
+					break;
+				case SETAMOUNT:
+					bool positive = Random.value < 0.5f;
+					int maxChange = positive ? 3 : amount;
+					int change = Mathf.FloorToInt(Random.Range(0, maxChange + ALMOST_ONE));
+					winCond[i][putIndex] = positive ? winCond[index][takeIndex] + change: winCond[index][takeIndex] - change;
+					caseStr = change + (positive ? " fler ": " färre ") + items[i-1].name + " än " + items[index-1].name;
+					set = true;
+					break;
+				}
+
+				instructionText = instructionText + "Vi vill " + putWhere + " ha " + caseStr + takeWhere +"\n";
+			}
+			else
+			{
+            	totalAmountFlags[i] = true;
+	            int num = Mathf.FloorToInt(Random.Range(1, 10));
+	            winCond[i] = new int[1] { num };
+	            instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
+			}
+		}
         print(instructionText);
         setNewInstructions(instructionText);
     }
+
 
     private string getColName(int i)
     {
@@ -485,28 +518,6 @@ public class GameScript : MonoBehaviour
 			throw new UnityException ();	
 		}
 	}
-
-    public void multiplayerMode(bool enabled)
-    {
-        multiplay = enabled;
-		singMultiMenu.SetActive(false);
-		if(multiplay)
-			roleMenu.SetActive(true);
-		else
-			initReady();
-    }
-    public void multiplayerRole(bool isPlacer)
-    {
-        this.placer = isPlacer;
-		roleMenu.SetActive(false);
-		seedMenu.SetActive(true);
-    }
-    public void seed(int seed)
-    {
-        Random.InitState(seed);
-		seedMenu.SetActive(false);
-        initReady();
-    }
 
 	//Tries to place an item on a wall 5 times, before giving up and reducing win condition instead. If no wall is given, one will be randomized.
 	private void placeItem(int i, int wallIndex = -1)	
@@ -605,4 +616,104 @@ public class GameScript : MonoBehaviour
 			}
 		}
 	}
+
+	public void multiplayerMode(bool enabled)
+	{
+		multiplay = enabled;
+		singMultiMenu.SetActive(false);
+		if(multiplay)
+			roleMenu.SetActive(true);
+		else
+			initReady();
+	}
+	public void multiplayerRole(bool isPlacer)
+	{
+		this.placer = isPlacer;
+		roleMenu.SetActive(false);
+		seedMenu.SetActive(true);
+	}
+	public void seed(int seed)
+	{
+		Random.InitState(seed);
+		seedMenu.SetActive(false);
+		initReady();
+	}
+	public void setRed()
+	{
+		setter = new Color(1, 0, 0);
+		colorSet = true;
+	}
+
+	public void setBlue()
+	{
+		setter = new Color(0, 0, 1);
+		colorSet = true;
+	}
+
+	public void setGreen()
+	{
+		setter = new Color(0, 1, 0);
+		colorSet = true;
+	}
+	public void setWhite()
+	{
+		setter = new Color(1, 1, 1);
+		colorSet = true;
+	}
+	public void IntersectTrue()
+	{
+		itemIntersect = true;
+	}
+	public void IntersectFalse()
+	{
+		itemIntersect = false;
+	}
+	public void levelUp()
+	{
+		clearLevel();
+		totalScore = levelScore;
+		level++;
+	}
+
+	public void setNewInstructions(string winInstructrions)
+	{
+		instr.text = winInstructrions;
+	}
+
+	public void menuSound()
+	{
+		if(!Mute)
+			MenuAudio.Play();
+	}
+
+	public void ChangeSound(bool Mute)
+	{
+		if (Mute == false)
+		{
+			// AudioListener.pause = false;
+			AudioText.text = "Audio On";
+			AudioListener.volume = 1;
+		}
+		else
+		{
+			// AudioListener.pause = true;
+			AudioText.text = "Audio Off";
+			AudioListener.volume = 0;
+		}
+	}
+
+	public void toggleSound()
+	{
+		if (Mute == true)
+		{
+			Mute = false;
+			ChangeSound(Mute);
+		}
+		else
+		{
+			Mute = true;
+			ChangeSound(Mute);
+		}
+	}
+
 }
