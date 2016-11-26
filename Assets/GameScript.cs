@@ -39,6 +39,7 @@ public class GameScript : MonoBehaviour
     private int level = 2;
     private bool multiplay = false;
     private bool placer = false;
+	private bool startPlacer = false;
 	private int levelScore;
 	private int totalScore = 0;
 
@@ -50,6 +51,10 @@ public class GameScript : MonoBehaviour
 	public GvrAudioSource VictoryAudio;
 	public GvrAudioSource NotRightAudio;
 
+	public Text levelText;
+	public Text pointsText;
+	public GameObject buttonPrefab;
+	public RectTransform ObjectPanel;
 	public GameObject room;
 	public GameObject singMultiMenu;
 	public GameObject roleMenu;
@@ -76,6 +81,7 @@ public class GameScript : MonoBehaviour
     void Start()
     {
 		room.SetActive(false);
+		buttonTest();
         Mute = false;
         ChangeSound(Mute);
 
@@ -120,7 +126,6 @@ public class GameScript : MonoBehaviour
 							CantPlaceAudio.transform.position = hit.point;
 							CantPlaceAudio.Play();
 						}
-	                    CheckWin();
 	                }
 	                else //If not clicking
 	                {
@@ -166,7 +171,6 @@ public class GameScript : MonoBehaviour
 	                        {
 	                            MeshRenderer mesh = hit.collider.GetComponent<MeshRenderer>();
 	                            mesh.material.color = setter;
-	                            CheckWin();
 	                        }
 	                        else if (hit.transform.tag == "Moveable")
 	                        {
@@ -290,7 +294,7 @@ public class GameScript : MonoBehaviour
 		else
 		{
 			levelScore = Mathf.FloorToInt(levelScore * POINT_DEDUCTION);
-			//NotRightAudio.Play();
+			NotRightAudio.Play();
 		}
     }
 
@@ -315,9 +319,9 @@ public class GameScript : MonoBehaviour
 
 	private void Victory()
 	{
-		text.text = "Du vinner!";
+		
 		VictoryAudio.Play();
-		levelUp();
+		levelUp(level++);
 		newInstructions();
 	}
 
@@ -325,6 +329,7 @@ public class GameScript : MonoBehaviour
     private void newInstructions()
     {
 		levelScore = 1000 + 400 * (level-1);
+		instructionText = "";
         //function for changing the instructions.
         int numItems = 0;
         if (level == 1)
@@ -420,7 +425,7 @@ public class GameScript : MonoBehaviour
 				int determiner = Mathf.FloorToInt(Random.Range(0, NUM_SPECIAL_CASES -1 + ALMOST_ONE));
 
 
-				int amount = winCond[i][takeIndex];
+				int amount = winCond[index][takeIndex];
 
 				bool set = false;
 				while(!set)								//The editor is fucking up the indentation :((( cba to fight it.
@@ -483,6 +488,8 @@ public class GameScript : MonoBehaviour
 		}
         print(instructionText);
         setNewInstructions(instructionText);
+		if(multiplay)
+			multiplayPopulate();
     }
 
 
@@ -558,62 +565,68 @@ public class GameScript : MonoBehaviour
 		}
 	}
 
+	private void multiplayPopulate()
+	{
+		if(totalAmountFlags[0])
+		{
+			int[] cols = winCond[0];
+			foreach(MeshRenderer mesh in meshes)
+			{
+				bool set = false;
+				while(!set)
+				{
+					int index = Mathf.FloorToInt(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
+					print(index);
+					if(cols[index] > 0)
+					{
+						cols[index] = cols[index] -1;
+						mesh.material.color = getColor(index);
+						set = true;
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0; i < winCond[0].Length; i++)
+			{
+				meshes[i].material.color = getColor(winCond[0][i]);
+			}
+		}
+		for(int i = 1; i < winCond.Length; i++)
+		{
+			if(totalAmountFlags[i])
+			{
+				for (int count = winCond[i][0]; count > 0; count--)
+				{
+					placeItem(i);
+				}
+			}
+			else
+			{
+				for (int wallIndex = 0; wallIndex < winCond[i].Length; wallIndex ++)
+				{
+					for (int count = winCond[i][wallIndex]; count > 0; count--)
+					{
+						placeItem(i, wallIndex);
+					}
+				}
+			}
+
+			if(placer)
+			{
+				clearLevel();
+			}
+		}
+	}
+
 	public void initReady()
 	{
 		newInstructions();
 		room.SetActive(true);
 		if(multiplay)
 		{
-			if(totalAmountFlags[0])
-			{
-				int[] cols = winCond[0];
-				foreach(MeshRenderer mesh in meshes)
-				{
-					bool set = false;
-					while(!set)
-					{
-						int index = Mathf.FloorToInt(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
-						if(cols[index] > 0)
-						{
-							cols[index] = cols[index] -1;
-							mesh.material.color = getColor(index);
-							set = true;
-						}
-					}
-				}
-			}
-			else
-			{
-				for(int i = 0; i < winCond[0].Length; i++)
-				{
-					meshes[i].material.color = getColor(winCond[0][i]);
-				}
-			}
-			for(int i = 1; i < winCond.Length; i++)
-			{
-				if(totalAmountFlags[i])
-				{
-					for (int count = winCond[i][0]; count > 0; count--)
-					{
-						placeItem(i);
-					}
-				}
-				else
-				{
-					for (int wallIndex = 0; wallIndex < winCond[i].Length; wallIndex ++)
-					{
-						for (int count = winCond[i][wallIndex]; count > 0; count--)
-						{
-							placeItem(i, wallIndex);
-						}
-					}
-				}
-
-				if(placer)
-				{
-					clearLevel();
-				}
-			}
+			multiplayPopulate();
 		}
 	}
 
@@ -629,6 +642,7 @@ public class GameScript : MonoBehaviour
 	public void multiplayerRole(bool isPlacer)
 	{
 		this.placer = isPlacer;
+		startPlacer = isPlacer;
 		roleMenu.SetActive(false);
 		seedMenu.SetActive(true);
 	}
@@ -668,11 +682,19 @@ public class GameScript : MonoBehaviour
 	{
 		itemIntersect = false;
 	}
-	public void levelUp()
+	public void levelUp(int num)
 	{
 		clearLevel();
-		totalScore = levelScore;
-		level++;
+		int change = 1;
+		if(multiplay)
+			change = (placer ? 2: 0);
+				
+		totalScore = levelScore * change;
+		pointsText.text = "Points: " + totalScore;
+		level = num;
+		levelText.text = "Level: " + level;
+		placer = (num % 2 == 0) ^ startPlacer;	//Switch roles every round (Beware! Functionality overlap between levelUp and newInstructions regarding placers and objects in scene. Cba to fix :)
+
 	}
 
 	public void setNewInstructions(string winInstructrions)
@@ -713,6 +735,68 @@ public class GameScript : MonoBehaviour
 		{
 			Mute = true;
 			ChangeSound(Mute);
+		}
+	}
+	private void buttonTest()
+	{
+		int width = 200;
+		int height = 50;
+		int distance = 0;
+		int maxColumn = 4;
+		int maxRows = 4;
+		int columns = maxColumn;
+		bool set = false;
+		int workingLength = items.Length;
+		while (!set)
+		{
+			if(workingLength > maxRows * maxColumn)
+			{
+				workingLength = maxRows * maxColumn;
+			}
+			if ( columns == 1)
+			{
+				columns = 4;
+				set = true;
+			}
+			else if(workingLength % columns == 0 && workingLength/columns <= maxRows)
+			{
+				set = true;
+			}
+			else
+			{
+				columns --;
+			}
+		}
+		for(int i = 0; i < workingLength; i++)
+		{
+			Vector2 pos = new Vector2(-(width+distance)*columns/4, height*maxRows/2);
+			pos.x = pos.x + (width + distance/2) * (i % columns);
+			pos.y = pos.y - (height + distance/2) * Mathf.Floor((i / columns));
+			GameObject button = Instantiate(buttonPrefab);
+			RectTransform rect= button.GetComponent<RectTransform>();
+			Text text = button.GetComponent<Text>();
+			text.text = items[i].name;
+			button.transform.SetParent(ObjectPanel, false);
+			rect.anchoredPosition = pos;
+
+			int tmpInt = i;
+			Button btn = button.GetComponent<Button>();
+			btn.onClick.AddListener(() => buttonClick(tmpInt));
+		}
+	}
+
+	private void buttonClick(int i)
+	{
+		if(!holdingItem)
+		{
+			holdingItem = true;
+			itemHeld = Instantiate(items[i]);
+			itemColider = itemHeld.GetComponent<Collider>();
+			itemHeld.tag = "Moveable";
+			itemHeld.layer = 0;
+			itemHeld.GetComponent<ItemScript>().setHolder(this);
+			itemHeld.transform.parent = null;
+			GrabAudio.Play();
 		}
 	}
 }
