@@ -44,7 +44,6 @@ public class GameScript : MonoBehaviour
 	private int levelScore;
 	private int totalScore = 0;
 
-
 	public GvrAudioSource PlaceAudio;
 	public GvrAudioSource GrabAudio;
 	public GvrAudioSource CantPlaceAudio;
@@ -64,8 +63,11 @@ public class GameScript : MonoBehaviour
     public GameObject[] walls = new GameObject[4];
 	private MeshRenderer[] meshes;
 	public GameObject[] items;
+    public Text[] buttons = new Text[3];
+    public Button dropItemButton;
+         
 
-	private bool[] totalAmountFlags = {false, false};
+    private bool[] totalAmountFlags = {false, false};
 	private int[][] winCond = new int[][] 
 	{
 		new int[] {BLUE, RED , RED , BLUE},
@@ -78,11 +80,15 @@ public class GameScript : MonoBehaviour
     private bool Mute;
 	int instruction = 0;
 	int wallColor = 0;
-
     // Use this for initialization
     void Start()
     {
+        /*buttons[0].enabled = false;
+        buttons[1].enabled = false;
+        buttons[2].enabled = false;
+        */
 		room.SetActive(false);
+
 		buttonTest();
         Mute = false;
         ChangeSound(Mute);
@@ -332,9 +338,35 @@ public class GameScript : MonoBehaviour
 		
 		VictoryAudio.Play();
 		levelUp(level++);
-		newInstructions();
+        int change = 1;
+        if (multiplay)
+            change = (placer ? 2 : 0);
+
+        totalScore += levelScore * change;
+        pointsText.text = "Points: " + totalScore;
 	}
 
+
+    public void avalibleItems(int itemNumber)
+    {
+ 
+        print(itemNumber);
+        print(buttons[itemNumber]);
+        buttons[itemNumber].enabled = true;
+
+    }
+
+    public void LoadDoor() {
+
+      /*  holdingItem = true;
+        itemHeld = Instantiate(hit.collider.gameObject);
+        itemColider = itemHeld.GetComponent<Collider>();
+        itemHeld.tag = "Moveable";
+        itemHeld.layer = 0;
+        itemHeld.GetComponent<ItemScript>().setHolder(this);
+        itemHeld.transform.parent = null;
+        */
+    }
 
     private void newInstructions()
     {
@@ -346,7 +378,7 @@ public class GameScript : MonoBehaviour
         {
             numItems = 1;
         }
-        else if (level == 2)
+        else 
         {
             numItems = Mathf.FloorToInt(Random.Range(1f, items.Length + ALMOST_ONE));
         }
@@ -382,6 +414,7 @@ public class GameScript : MonoBehaviour
                 winCond[0][i] = colour;
                 string colName = getColName(colour);
                 instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
+
             }
         }
 
@@ -414,7 +447,6 @@ public class GameScript : MonoBehaviour
                     }
                     takeWhere = " på vägg " + takeIndex;
                 }
-
                 int wallIndex;
                 bool totalAmount = Random.value > 0.5f;
                 if (totalAmount)
@@ -426,7 +458,7 @@ public class GameScript : MonoBehaviour
                 else
                 {
                     wallIndex = Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE));
-                    putWhere = " på vägg " + wallIndex;
+                    putWhere = " på vägg " + (wallIndex+1);
                     winCond[i] = new int[4];
                     for (int j = 0; j < winCond[i].Length; j++)
                         winCond[i][j] = 0;
@@ -645,8 +677,8 @@ public class GameScript : MonoBehaviour
 
 	public void initReady()
 	{
-        newInstructions();
-        room.SetActive(true);
+		newInstructions();
+		room.SetActive(true);
     }
 
 	public void multiplayerMode(bool enabled)
@@ -704,19 +736,14 @@ public class GameScript : MonoBehaviour
 	public void levelUp(int num)
 	{
 		clearLevel();
-		int change = 1;
-		if(multiplay)
-			change = (placer ? 2: 0);
-				
-		totalScore = levelScore * change;
-		pointsText.text = "Points: " + totalScore;
+		
 		level = num;
 		levelText.text = "Level: " + level;
-		placer = (num % 2 == 0) ^ startPlacer;	//Switch roles every round (Beware! Functionality overlap between levelUp and newInstructions regarding placers and objects in scene. Cba to fix :)
+		placer = (num % 2 == 0) ^ startPlacer;  //Switch roles every round (Beware! Functionality overlap between levelUp and newInstructions regarding placers and objects in scene. Cba to fix :)
+        newInstructions();                      //kinda doesn't matter now tho :D
+    }
 
-	}
-
-	public void setNewInstructions(string winInstructrions)
+    public void setNewInstructions(string winInstructrions)
 	{
 		instr.text = winInstructrions;
 	}
@@ -756,14 +783,26 @@ public class GameScript : MonoBehaviour
 			ChangeSound(Mute);
 		}
 	}
+
+    public void dropItem()
+    {
+        if (holdingItem)
+        {
+            holdingItem = false;
+            Destroy(itemHeld);
+            itemHeld = null;
+        }
+    }
+
 	private void buttonTest()
 	{
-		int width = 200;
-		int height = 50;
-		int distance = 0;
-		int maxColumn = 4;
-		int maxRows = 4;
-		int columns = maxColumn;
+        //int width = 200;
+        //int height = 50;
+        //int distance = -200;
+        int posY = 325;
+		int maxColumn = 2;
+		int maxRows = 6;
+		int columns = 1;
 		bool set = false;
 		int workingLength = items.Length;
 		while (!set)
@@ -788,19 +827,20 @@ public class GameScript : MonoBehaviour
 		}
 		for(int i = 0; i < workingLength; i++)
 		{
-			Vector2 pos = new Vector2(-(width+distance)*columns/4, height*maxRows/2);
-			pos.x = pos.x + (width + distance/2) * (i % columns);
-			pos.y = pos.y - (height + distance/2) * Mathf.Floor((i / columns));
-			GameObject button = Instantiate(buttonPrefab);
-			RectTransform rect= button.GetComponent<RectTransform>();
-			Text text = button.GetComponent<Text>();
-			text.text = items[i].name;
-			button.transform.SetParent(ObjectPanel, false);
-			rect.anchoredPosition = pos;
+           
+                Vector2 pos = new Vector2(0, posY=posY-100);
+                //pos.x = pos.x + (width + distance/2) * (i % columns);
+                //pos.y = pos.y - (height + distance/2) * Mathf.Floor((i / columns)) ;
+                GameObject button = Instantiate(buttonPrefab);
+                RectTransform rect = button.GetComponent<RectTransform>();
+                Text text = button.GetComponent<Text>();
+                text.text = items[i].name;
+                button.transform.SetParent(ObjectPanel, false);
+                rect.anchoredPosition = pos;
 
-			int tmpInt = i;
-			Button btn = button.GetComponent<Button>();
-			btn.onClick.AddListener(() => buttonClick(tmpInt));
+                int tmpInt = i;
+                Button btn = button.GetComponent<Button>();
+                btn.onClick.AddListener(() => buttonClick(tmpInt));
 		}
 	}
 
