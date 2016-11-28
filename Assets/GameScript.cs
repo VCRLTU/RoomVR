@@ -50,6 +50,7 @@ public class GameScript : MonoBehaviour
 	public GvrAudioSource VictoryAudio;
 	public GvrAudioSource NotRightAudio;
 
+    public GameScript script;
 	public Text levelText;
 	public Text pointsText;
 	public GameObject buttonPrefab;
@@ -301,6 +302,14 @@ public class GameScript : MonoBehaviour
 		{
 			levelScore = Mathf.FloorToInt(levelScore * POINT_DEDUCTION);
 			NotRightAudio.Play();
+            print(totalAmountFlags[0]);
+            for (int i = 0; i < winCond.Length; i++)
+            {
+                string pr = "";
+                for (int j = 0; j < winCond[i].Length; j++)
+                    pr += winCond[i][j] +", ";
+                print(pr);
+            }
 		}
     }
 
@@ -360,8 +369,8 @@ public class GameScript : MonoBehaviour
 
     private void newInstructions()
     {
-		levelScore = 1000 + 400 * (level-1);
-		instructionText = "";
+        levelScore = 1000 + 400 * (level - 1);
+        instructionText = "";
         //function for changing the instructions.
         int numItems = 0;
         if (level == 1)
@@ -410,119 +419,132 @@ public class GameScript : MonoBehaviour
 
         for (int i = 1; i < numItems + 1; i++)
         {
-			float chance = Random.Range(0, 3 + level);
-			bool specialCase = chance > 2f;
-			if(specialCase && i > 1)
-			{
-				string caseStr = "";
-				string putWhere = "";
-				string takeWhere = "";
-				int takeIndex = 0;
-				int putIndex;
-				int index = Mathf.FloorToInt(Random.Range(1, i-1+ALMOST_ONE));
+            float chance = Random.Range(0, 3 + level);
+            bool specialCase = chance > 2f;
+            if (specialCase && i > 1)
+            {
+                string caseStr = "";
+                string putWhere = "";
+                string takeWhere = "";
+                int takeIndex = 0;
+                int putIndex;
+                int index = Mathf.FloorToInt(Random.Range(1, i - 1 + ALMOST_ONE));
 
-				if(totalAmountFlags[index])
-				{
-					takeWhere = " totalt.";
-				}
-				else
-				{
-					for (int j = 0; j< winCond[index].Length; j++)
-					{
-						if(winCond[index][j] != 0)
-						{
-							takeIndex = j;
-							break;
-						}
-					}
-					takeWhere = " på vägg " + takeIndex;
-				}
+                if (totalAmountFlags[index])
+                {
+                    takeWhere = " totalt.";
+                }
+                else
+                {
+                    for (int j = 0; j < winCond[index].Length; j++)
+                    {
+                        if (winCond[index][j] != 0)
+                        {
+                            takeIndex = j;
+                            break;
+                        }
+                    }
+                    takeWhere = " på vägg " + takeIndex;
+                }
+                int wallIndex;
+                bool totalAmount = Random.value > 0.5f;
+                if (totalAmount)
+                {
+                    putWhere = " totalt ";
+                    winCond[i] = new int[1];
+                    putIndex = 0;
+                }
+                else
+                {
+                    wallIndex = Mathf.FloorToInt(Random.Range(0, walls.Length - 1 + ALMOST_ONE));
+                    putWhere = " på vägg " + (wallIndex+1);
+                    winCond[i] = new int[4];
+                    for (int j = 0; j < winCond[i].Length; j++)
+                        winCond[i][j] = 0;
+                    putIndex = wallIndex;
+                }
+                int determiner = Mathf.FloorToInt(Random.Range(0, NUM_SPECIAL_CASES - 1 + ALMOST_ONE));
 
-				int wallIndex;
-				bool totalAmount = Random.value > 0.5f;
-				if(totalAmount)
-				{
-					putWhere = " totalt ";
-					winCond[i] = new int[1];
-					putIndex = 0;
-				}
-				else
-				{
-					wallIndex = Mathf.FloorToInt(Random.Range(0, walls.Length-1+ALMOST_ONE));
-					putWhere = " på vägg " + (wallIndex+1);
-					winCond[i] = new int[4];
-					for (int j = 0; j < winCond[i].Length; j++)
-						winCond[i][j] = 0;
-					putIndex = wallIndex;
-				}
-				int determiner = Mathf.FloorToInt(Random.Range(0, NUM_SPECIAL_CASES -1 + ALMOST_ONE));
 
+                int amount = winCond[index][takeIndex];
 
-				int amount = winCond[index][takeIndex];
+                bool set = false;
+                while (!set)                                //The editor is fucking up the indentation :((( cba to fight it.
+                    switch (determiner)
+                    {
+                        case EQUAL:
+                            winCond[i][putIndex] = winCond[index][takeIndex];
+                            caseStr = "lika många " + items[i - 1].name + " som " + items[index - 1].name;
+                            set = true;
+                            break;
 
-				bool set = false;
-				while(!set)								//The editor is fucking up the indentation :((( cba to fight it.
-					switch (determiner)
-				{
-				case EQUAL:
-					{
-						winCond[i][putIndex] = winCond[index][takeIndex];
+                        case DIVIDE:
+                            if (amount % 2 == 0 && amount >= 2)
+                            {
+                                winCond[i][putIndex] = winCond[index][takeIndex] / 2;
 
-						caseStr = "lika många " + items[i-1].name + " som " +items[index-1].name;
-						set = true;
-						break;
-					}
-				case DIVIDE:
-					{
-						if (amount % 2 == 0 && amount >= 2)
-						{
-							winCond[i][putIndex] = winCond[index][takeIndex] / 2;
+                                caseStr = "hälften så många " + items[i - 1].name + " som " + items[index - 1].name;
+                                set = true;
+                            }
+                            else if (amount < MAX_DOUBLEABLE)
+                                determiner = DOUBLE;
+                            else
+                                determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
+                            break;
 
-							caseStr = "hälften så många " + items[i-1].name + " som " + items[index-1].name;
-							set = true;
-						}
-						else if(amount < MAX_DOUBLEABLE)
-							determiner = DOUBLE;
-						else
-							determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
-						break;
-					}
-				case DOUBLE:
-					if(amount <= MAX_DOUBLEABLE)
-					{
-						winCond[i][putIndex] = winCond[index][takeIndex] * 2;
-						caseStr = "dubbelt så många " + items[i-1].name + " som " + items[index-1].name;
-						set = true;
-					}
-					else if(amount % 2 == 0)
-						determiner = DIVIDE;
-					else 
-						determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
-					break;
-				case SETAMOUNT:
-					bool positive = Random.value < 0.5f;
-					int maxChange = positive ? 3 : amount;
-					int change = Mathf.FloorToInt(Random.Range(0, maxChange + ALMOST_ONE));
-					winCond[i][putIndex] = positive ? winCond[index][takeIndex] + change: winCond[index][takeIndex] - change;
-					caseStr = change + (positive ? " fler ": " färre ") + items[i-1].name + " än " + items[index-1].name;
-					set = true;
-					break;
-				}
+                        case DOUBLE:
+                            if (amount <= MAX_DOUBLEABLE)
+                            {
+                                winCond[i][putIndex] = winCond[index][takeIndex] * 2;
+                                caseStr = "dubbelt så många " + items[i - 1].name + " som " + items[index - 1].name;
+                                set = true;
+                            }
+                            else if (amount % 2 == 0)
+                                determiner = DIVIDE;
+                            else
+                                determiner = (Random.value < 0.5f ? EQUAL : SETAMOUNT);
+                            break;
+                        case SETAMOUNT:
+                            bool positive = Random.value < 0.5f;
+                            int maxChange = positive ? 3 : amount;
+                            int change = Mathf.FloorToInt(Random.Range(0, maxChange + ALMOST_ONE));
+                            winCond[i][putIndex] = positive ? winCond[index][takeIndex] + change : winCond[index][takeIndex] - change;
+                            caseStr = change + (positive ? " fler " : " färre ") + items[i - 1].name + " än " + items[index - 1].name;
+                            set = true;
+                            break;
+                    }
 
-				instructionText = instructionText + "Vi vill " + putWhere + " ha " + caseStr + takeWhere +"\n";
-			}
-			else
-			{
-            	totalAmountFlags[i] = true;
-	            int num = Mathf.FloorToInt(Random.Range(1, 10));
-	            winCond[i] = new int[1] { num };
-	            instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
-			}
-		}
+                instructionText = instructionText + "Vi vill " + putWhere + " ha " + caseStr + takeWhere + "\n";
+            }
+            else
+            {
+                totalAmountFlags[i] = true;
+                int num = Mathf.FloorToInt(Random.Range(1, 10));
+                winCond[i] = new int[1] { num };
+                instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
+            }
+        }
         print(instructionText);
+        if (multiplay)
+        {
+            print(winCond[0][0] + ", "+ winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
+            multiplayPopulate();
+            print(winCond[0] + ", "+ winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
+            if (placer)
+                instructionText = "Du skall placera objekt som din vän säger åt dig";
+            else
+            {
+                instructionText = "Du skall berätta för din vän hur rummet ser ut\n\nTips:\n";
+                if (totalAmountFlags[0])
+                    instructionText = instructionText + "Färger: Specifik vägg\n";
+                else
+                    instructionText = instructionText + "Färger: Totalt\n";
+                for (int i = 1; i < totalAmountFlags.Length; i++)
+                    instructionText = instructionText + items[i - 1].name + ": " + (totalAmountFlags[i] ? "Totalt" : "Specifik vägg") + "\n";
+            }
+        }
         setNewInstructions(instructionText);
-		if(multiplay)
-			multiplayPopulate();
+
     }
 
 
@@ -601,32 +623,32 @@ public class GameScript : MonoBehaviour
 	private void multiplayPopulate()
 	{
 		if(totalAmountFlags[0])
-		{
-			int[] cols = winCond[0];
-			foreach(MeshRenderer mesh in meshes)
+        {
+            int[] cols = (int[]) winCond[0].Clone();
+            foreach (MeshRenderer mesh in meshes)
 			{
 				bool set = false;
 				while(!set)
 				{
 					int index = Mathf.FloorToInt(Random.Range(0, NUMBER_OF_COLORS-1+ALMOST_ONE));
-					print(index);
 					if(cols[index] > 0)
 					{
 						cols[index] = cols[index] -1;
-						mesh.material.color = getColor(index);
+                        mesh.material.color = getColor(index);
 						set = true;
 					}
 				}
 			}
-		}
-		else
+            print(winCond[0][0] + ", " + winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
+        }
+        else
 		{
 			for(int i = 0; i < winCond[0].Length; i++)
 			{
 				meshes[i].material.color = getColor(winCond[0][i]);
 			}
 		}
-		for(int i = 1; i < winCond.Length; i++)
+        for (int i = 1; i < winCond.Length; i++)
 		{
 			if(totalAmountFlags[i])
 			{
@@ -645,19 +667,18 @@ public class GameScript : MonoBehaviour
 					}
 				}
 			}
-
-			if(placer)
+            if (placer)
 			{
 				clearLevel();
-			}
-		}
+            }
+        }
 	}
 
 	public void initReady()
 	{
 		newInstructions();
 		room.SetActive(true);
-	}
+    }
 
 	public void multiplayerMode(bool enabled)
 	{
