@@ -30,6 +30,8 @@ public class GameScript : MonoBehaviour
     private bool multiplay = false;
     private bool placer = false;
 
+    
+    public GameObject objectPanel;
 	public GameObject room;
 	public GameObject singMultiMenu;
 	public GameObject roleMenu;
@@ -37,8 +39,9 @@ public class GameScript : MonoBehaviour
     public GameObject[] walls = new GameObject[4];
 	private MeshRenderer[] meshes;
 	public GameObject[] items;
+    public Text[] buttons;
 
-	private bool[] totalAmountFlags = {false, false};
+    private bool[] totalAmountFlags = {false, false};
 	private int[][] winCond = new int[][] 
 	{
 		new int[] {BLUE, RED , RED , BLUE},
@@ -51,11 +54,15 @@ public class GameScript : MonoBehaviour
     private bool Mute;
 	int instruction = 0;
 	int wallColor = 0;
-
     // Use this for initialization
     void Start()
     {
-		room.SetActive(false);
+
+        buttons[0].enabled = false;
+        buttons[1].enabled = false;
+        buttons[2].enabled = false;
+
+        room.SetActive(false);
         Mute = false;
         ChangeSound(Mute);
 
@@ -408,6 +415,27 @@ public class GameScript : MonoBehaviour
         }
     }
 
+    public void avalibleItems(int itemNumber)
+    {
+ 
+        print(itemNumber);
+        print(buttons[itemNumber]);
+        buttons[itemNumber].enabled = true;
+
+    }
+
+    public void LoadDoor() {
+
+      /*  holdingItem = true;
+        itemHeld = Instantiate(hit.collider.gameObject);
+        itemColider = itemHeld.GetComponent<Collider>();
+        itemHeld.tag = "Moveable";
+        itemHeld.layer = 0;
+        itemHeld.GetComponent<ItemScript>().setHolder(this);
+        itemHeld.transform.parent = null;
+        */
+    }
+
     private void newInstructions()
     {
         //function for changing the instructions.
@@ -452,6 +480,7 @@ public class GameScript : MonoBehaviour
                 winCond[0][i] = colour;
                 string colName = getColName(colour);
                 instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
+
             }
         }
 
@@ -464,10 +493,12 @@ public class GameScript : MonoBehaviour
             int num = Mathf.FloorToInt(Random.Range(1, 10));
             winCond[i] = new int[1] { num };
             instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
+            avalibleItems(i-1);
             //}
         }
         print(instructionText);
         setNewInstructions(instructionText);
+        
     }
 
     private string getColName(int i)
