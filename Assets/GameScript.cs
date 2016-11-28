@@ -27,6 +27,7 @@ public class GameScript : MonoBehaviour
 	private const int DIVIDE = 1;
 	private const int DOUBLE = 2;
 	private const int SETAMOUNT = 3;
+    private const float UNSTICKER = 0.001f;
 	
 
     private GameObject itemHeld;
@@ -141,13 +142,13 @@ public class GameScript : MonoBehaviour
 						localExtent.x = Mathf.Abs(localExtent.x);
 
 						if(localPoint.x > WALL_LEN - localExtent.x)
-							localPoint.x = WALL_LEN - localExtent.x;
+							localPoint.x = WALL_LEN - (localExtent.x + UNSTICKER);
 						else if(localPoint.x < -WALL_LEN + localExtent.x)
-							localPoint.x = -WALL_LEN + localExtent.x;
+							localPoint.x = -WALL_LEN + (localExtent.x + UNSTICKER);
 						if(localPoint.y > WALL_HEIGHT - localExtent.y)
-							localPoint.y = WALL_HEIGHT - localExtent.y; 
+							localPoint.y = WALL_HEIGHT - (localExtent.y + UNSTICKER); 
 						else if(localPoint.y < 0 + localExtent.y)
-							localPoint.y = 0 + localExtent.y;
+							localPoint.y = 0 + (localExtent.y + UNSTICKER);
 						itemHeld.transform.position = hit.transform.TransformDirection(localPoint);
 
 	                    
