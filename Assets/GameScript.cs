@@ -402,7 +402,7 @@ public class GameScript : MonoBehaviour
                 if (colNumb > 0)
                 {
                     string colName = getColName(i);
-                    instructionText = instructionText + "Vi vill ha " + colNumb + " " + colName + "a väggar. \n";
+                    instructionText = instructionText + "Vi vill ha " + colNumb + " " + colName + "a väggar \n";
                 }
             }
         }
@@ -413,7 +413,7 @@ public class GameScript : MonoBehaviour
                 int colour = Mathf.FloorToInt(Random.Range(0f, NUMBER_OF_COLORS - 1 + ALMOST_ONE));
                 winCond[0][i] = colour;
                 string colName = getColName(colour);
-                instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + ". \n";
+                instructionText = instructionText + "Vägg " + (i + 1) + " ska vara " + colName + " \n";
 
             }
         }
@@ -433,7 +433,7 @@ public class GameScript : MonoBehaviour
 
                 if (totalAmountFlags[index])
                 {
-                    takeWhere = " totalt.";
+                    takeWhere = " totalt";
                 }
                 else
                 {
@@ -451,7 +451,7 @@ public class GameScript : MonoBehaviour
                 bool totalAmount = Random.value > 0.5f;
                 if (totalAmount)
                 {
-                    putWhere = " totalt ";
+                    putWhere = "totalt";
                     winCond[i] = new int[1];
                     putIndex = 0;
                 }
@@ -722,7 +722,7 @@ public class GameScript : MonoBehaviour
 	}
 	public void setWhite()
 	{
-		setter = new Color(1, 1, 1);
+		setter = new Color(255, 255, 255);
 		colorSet = true;
 	}
 	public void IntersectTrue()
@@ -759,13 +759,13 @@ public class GameScript : MonoBehaviour
 		if (Mute == false)
 		{
 			// AudioListener.pause = false;
-			AudioText.text = "Audio On";
+			AudioText.text = "Ljud På";
 			AudioListener.volume = 1;
 		}
 		else
 		{
 			// AudioListener.pause = true;
-			AudioText.text = "Audio Off";
+			AudioText.text = "Ljud Av";
 			AudioListener.volume = 0;
 		}
 	}
@@ -857,5 +857,5 @@ public class GameScript : MonoBehaviour
 			itemHeld.transform.parent = null;
 			GrabAudio.Play();
 		}
-	}
+    }
 }
