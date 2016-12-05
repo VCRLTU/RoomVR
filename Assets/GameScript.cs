@@ -37,7 +37,7 @@ public class GameScript : MonoBehaviour
     private bool itemIntersect = false;
     private Color setter;
     private string instructionText;
-    private int level = 2;
+    private int level = 1;
     private bool multiplay = false;
     private bool placer = false;
 	private bool startPlacer = false;
@@ -337,14 +337,22 @@ public class GameScript : MonoBehaviour
 	{
 		
 		VictoryAudio.Play();
-		levelUp(level++);
-        int change = 1;
-        if (multiplay)
-            change = (placer ? 2 : 0);
+        if (level == 4)
+        {
+            EndGame();
+        }
+        else
+        {
+            levelUp(level + 1);
+            int change = 1;
+            if (multiplay)
+                change = (placer ? 2 : 0);
 
-        totalScore += levelScore * change;
-        pointsText.text = "Points: " + totalScore;
-	}
+            totalScore += levelScore * change;
+            pointsText.text = "Points: " + totalScore;
+
+        }
+    }
 
 
     public void avalibleItems(int itemNumber)
@@ -520,7 +528,7 @@ public class GameScript : MonoBehaviour
             else
             {
                 totalAmountFlags[i] = true;
-                int num = Mathf.FloorToInt(Random.Range(1, 10));
+                int num = Mathf.FloorToInt(Random.Range(1, 5));
                 winCond[i] = new int[1] { num };
                 instructionText = instructionText + "Vi vill ha " + num + " " + items[i - 1].name + "\n";
             }
@@ -675,6 +683,11 @@ public class GameScript : MonoBehaviour
         }
 	}
 
+    private void EndGame()
+    {
+
+    }
+
 	public void initReady()
 	{
 		newInstructions();
@@ -722,7 +735,7 @@ public class GameScript : MonoBehaviour
 	}
 	public void setWhite()
 	{
-		setter = new Color(255, 255, 255);
+		setter = new Color(1, 1, 1);
 		colorSet = true;
 	}
 	public void IntersectTrue()
@@ -738,7 +751,7 @@ public class GameScript : MonoBehaviour
 		clearLevel();
 		
 		level = num;
-		levelText.text = "Level: " + level;
+		levelText.text = "Nivå: " + level;
 		placer = (num % 2 == 0) ^ startPlacer;  //Switch roles every round (Beware! Functionality overlap between levelUp and newInstructions regarding placers and objects in scene. Cba to fix :)
         newInstructions();                      //kinda doesn't matter now tho :D
     }
