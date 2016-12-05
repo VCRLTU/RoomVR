@@ -349,7 +349,7 @@ public class GameScript : MonoBehaviour
                 change = (placer ? 2 : 0);
 
             totalScore += levelScore * change;
-            pointsText.text = "Points: " + totalScore;
+            pointsText.text = "Poäng: " + totalScore;
 
         }
     }
