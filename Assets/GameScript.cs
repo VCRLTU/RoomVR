@@ -303,10 +303,9 @@ public class GameScript : MonoBehaviour
 		{
 			levelScore = Mathf.FloorToInt(levelScore * POINT_DEDUCTION);
 			NotRightAudio.Play();
-            print(totalAmountFlags[0]);
             for (int i = 0; i < winCond.Length; i++)
             {
-                string pr = "";
+                string pr = i + ": ";
                 for (int j = 0; j < winCond[i].Length; j++)
                     pr += winCond[i][j] +", ";
                 print(pr);
@@ -352,28 +351,6 @@ public class GameScript : MonoBehaviour
             pointsText.text = "Poäng: " + totalScore;
 
         }
-    }
-
-
-    public void avalibleItems(int itemNumber)
-    {
- 
-        print(itemNumber);
-        print(buttons[itemNumber]);
-        buttons[itemNumber].enabled = true;
-
-    }
-
-    public void LoadDoor() {
-
-      /*  holdingItem = true;
-        itemHeld = Instantiate(hit.collider.gameObject);
-        itemColider = itemHeld.GetComponent<Collider>();
-        itemHeld.tag = "Moveable";
-        itemHeld.layer = 0;
-        itemHeld.GetComponent<ItemScript>().setHolder(this);
-        itemHeld.transform.parent = null;
-        */
     }
 
     private void newInstructions()
@@ -536,9 +513,7 @@ public class GameScript : MonoBehaviour
         print(instructionText);
         if (multiplay)
         {
-            print(winCond[0][0] + ", "+ winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
             multiplayPopulate();
-            print(winCond[0] + ", "+ winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
             if (placer)
                 instructionText = "Du skall placera objekt som din vän säger åt dig";
             else
@@ -648,7 +623,6 @@ public class GameScript : MonoBehaviour
 					}
 				}
 			}
-            print(winCond[0][0] + ", " + winCond[0][1] + ", " + winCond[0][2] + ", " + winCond[0][3]);
         }
         else
 		{
